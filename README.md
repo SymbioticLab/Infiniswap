@@ -18,7 +18,7 @@ The following minimum prerequisites are required to use Infiniswap:
 * Software  
   * Operating system: Ubuntu 14.04 (kernel 3.13.0)
   * Container: LXC (or any other container technologies) with cgroup (memory and swap) enabled  
-  * RDMA NIC driver: [MLNX OFED 4.0](http://www.mellanox.com/page/products_dyn?product_family=26), or select the right version for your operating system. 
+  * RDMA NIC driver: [MLNX_OFED 3.2/3.3/3.4](http://www.mellanox.com/page/products_dyn?product_family=26), and select the right version for your operating system. 
 
 * Hardware  
    * Mellanox ConnectX-3 (InfiniBand)
@@ -149,6 +149,24 @@ cd setup
 # make nbdx-infiniswap0 a swap partition
 sudo ./infiniswap_bd_setup.sh
 ```
+
+```bash  	
+# If you have the error: 
+#   "insmod: ERROR: could not insert module infiniswap.ko: Invalid parameters"
+# or get the following message from kernel (dmesg):
+#   "infiniswap: disagrees about version of symbol: xxxx"
+# You need a proper Module.symvers file for the MLNX_OFED driver
+#
+cd infiniswap_bd
+make clean
+cd ../setup
+# Solution 1 (copy the Module.symvers file from MLNX_OFED):
+./get_module.symvers.sh
+# Or solution 2 (generate a new Module.symvers file)
+#./create_Module.symvers.sh
+# Then, recompile infiniswap block device from step 3 in "How to Build and Install"
+```
+
 5. Configure memory limitation of container (LXC)  
 ```bash  	
 # edit "memory.limit_in_bytes" in "config" file of container (LXC)
