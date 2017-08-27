@@ -1,9 +1,286 @@
-<HTML>
-    <HEAD>
-    <TITLE>Infiniswap</TITLE>
-    </HEAD>
-    <BODY>
-    <CENTER><H1>Introduction to Infiniswap</H1></CENTER>
-    <a href="https://github.com/Infiniswap/infiniswap">Source code</a> on Github.
-    </BODY>
-    </HTML>
+<!DOCTYPE html>
+<!-- saved from url=(0031)http://infiniswap2.webnode.com/ -->
+<html class="wf-proximanova-n9-active wf-proximanova-i9-active wf-proximanova-n7-active wf-proximanova-i7-active wf-proximanova-n8-active wf-proximanova-i8-active wf-proximanova-n1-active wf-proximanova-i1-active wf-proximanova-n6-active wf-proximanova-i6-active wf-proximanova-n4-active wf-proximanova-i4-active wf-proximanova-n3-active wf-proximanova-i3-active wf-proximanova-n5-active wf-proximanova-i5-active wf-ptserif-n4-active wf-ptserif-i4-active wf-ptserif-n7-active wf-ptserif-i7-active wf-brandongrotesque-n3-active wf-brandongrotesque-i3-active wf-brandongrotesque-n5-active wf-brandongrotesque-i5-active wf-reklamescript-n4-active wf-reklamescript-n7-active wf-firasans-n4-active wf-firasans-i4-active wf-firasans-n3-active wf-firasans-i3-active wf-firasans-n7-active wf-firasans-i7-active wf-active js pc fonts-loaded" prefix="og: http://ogp.me/ns#" lang="en-us"><!--<![endif]--><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><title>Infiniswap2</title><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="msapplication-tap-highlight" content="no"><link href="./2sod1h.css" rel="stylesheet"><meta name="description" content=""><meta name="keywords" content=""><meta name="generator" content="Webnode 2"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="format-detection" content="telephone=no">
+
+<meta property="og:url" content="http://infiniswap2.webnode.com/"><meta property="og:title" content="Infiniswap2"><meta property="og:type" content="article"><meta property="og:description" content="Memory-intensive applications suffer large performance loss when their working sets do not completely fit in the physical memory. Memory disaggregation can expose remote memory across a cluster to those applications and mitigate such loss. However, existing proposals call for new architectures and/or new programming models, making them infeasible."><meta property="og:site_name" content="Infiniswap2"><meta property="og:image" content="http://files.infiniswap2.webnode.com/200000039-53abb54a6b/700/figure1-39.png"><meta property="og:article:published_time" content="2017-08-27T20:28:09+0200"><link rel="canonical" href="http://infiniswap2.webnode.com/"><script async="" src="./analytics.js"></script><script>window.checkAndChangeSvgColor=function(c){try{var a=document.getElementById(c);if(a&&!a.src){c=[["border","borderColor"],["outline","outlineColor"],["color","color"]];for(var h,b,d,f=[],e=0,m=c.length;e<m;e++)if(h=window.getComputedStyle(a)[c[e][1]].replace(/\s/g,"").match(/^rgb[a]?\(([0-9]{1,3}),([0-9]{1,3}),([0-9]{1,3})/i)){b="";for(var g=1;3>=g;g++)b+=("0"+parseInt(h[g],10).toString(16)).slice(-2);"0"===b.charAt(0)&&(d=parseInt(b.substr(0,2),16),d=Math.max(16,d),b=d.toString(16)+b.slice(-4));f.push(c[e][0]+"="+b)}if(f.length){var k=a.getAttribute("data-src");a.src=k+(0>k.indexOf("?")?"?":"&")+f.join("&");a.removeAttribute("data-src");var l=a.parentNode;l.innerHTML=l.innerHTML}}}catch(n){}};</script>
+			<!-- Begin TypeKit Embed Code -->
+<script src="./lab8xti.js"></script>
+<style type="text/css">.tk-proxima-nova{font-family:"proxima-nova",sans-serif;}.tk-pt-serif{font-family:"pt-serif",sans-serif;}.tk-brandon-grotesque{font-family:"brandon-grotesque",sans-serif;}.tk-reklame-script{font-family:"reklame-script",sans-serif;}.tk-fira-sans{font-family:"fira-sans",sans-serif;}</style><style type="text/css">@font-face{font-family:tk-proxima-nova-n9;src:url(https://use.typekit.net/af/9a08b4/00000000000000003b9ad1af/27/l?subset_id=1&fvd=n9&v=3) format("woff2"),url(https://use.typekit.net/af/9a08b4/00000000000000003b9ad1af/27/d?subset_id=1&fvd=n9&v=3) format("woff"),url(https://use.typekit.net/af/9a08b4/00000000000000003b9ad1af/27/a?subset_id=1&fvd=n9&v=3) format("opentype");font-weight:900;font-style:normal;}@font-face{font-family:tk-proxima-nova-i9;src:url(https://use.typekit.net/af/4e7f74/00000000000000003b9ad1b0/27/l?subset_id=1&fvd=i9&v=3) format("woff2"),url(https://use.typekit.net/af/4e7f74/00000000000000003b9ad1b0/27/d?subset_id=1&fvd=i9&v=3) format("woff"),url(https://use.typekit.net/af/4e7f74/00000000000000003b9ad1b0/27/a?subset_id=1&fvd=i9&v=3) format("opentype");font-weight:900;font-style:italic;}@font-face{font-family:tk-proxima-nova-n7;src:url(https://use.typekit.net/af/2793a0/00000000000000003b9ad1b1/27/l?subset_id=1&fvd=n7&v=3) format("woff2"),url(https://use.typekit.net/af/2793a0/00000000000000003b9ad1b1/27/d?subset_id=1&fvd=n7&v=3) format("woff"),url(https://use.typekit.net/af/2793a0/00000000000000003b9ad1b1/27/a?subset_id=1&fvd=n7&v=3) format("opentype");font-weight:700;font-style:normal;}@font-face{font-family:tk-proxima-nova-i7;src:url(https://use.typekit.net/af/f3c752/00000000000000003b9ad1b2/27/l?subset_id=1&fvd=i7&v=3) format("woff2"),url(https://use.typekit.net/af/f3c752/00000000000000003b9ad1b2/27/d?subset_id=1&fvd=i7&v=3) format("woff"),url(https://use.typekit.net/af/f3c752/00000000000000003b9ad1b2/27/a?subset_id=1&fvd=i7&v=3) format("opentype");font-weight:700;font-style:italic;}@font-face{font-family:tk-proxima-nova-n8;src:url(https://use.typekit.net/af/085d88/00000000000000003b9ad1b3/27/l?subset_id=1&fvd=n8&v=3) format("woff2"),url(https://use.typekit.net/af/085d88/00000000000000003b9ad1b3/27/d?subset_id=1&fvd=n8&v=3) format("woff"),url(https://use.typekit.net/af/085d88/00000000000000003b9ad1b3/27/a?subset_id=1&fvd=n8&v=3) format("opentype");font-weight:800;font-style:normal;}@font-face{font-family:tk-proxima-nova-i8;src:url(https://use.typekit.net/af/03908a/00000000000000003b9ad1b4/27/l?subset_id=1&fvd=i8&v=3) format("woff2"),url(https://use.typekit.net/af/03908a/00000000000000003b9ad1b4/27/d?subset_id=1&fvd=i8&v=3) format("woff"),url(https://use.typekit.net/af/03908a/00000000000000003b9ad1b4/27/a?subset_id=1&fvd=i8&v=3) format("opentype");font-weight:800;font-style:italic;}@font-face{font-family:tk-proxima-nova-n1;src:url(https://use.typekit.net/af/d91137/00000000000000003b9ad1bd/27/l?subset_id=1&fvd=n1&v=3) format("woff2"),url(https://use.typekit.net/af/d91137/00000000000000003b9ad1bd/27/d?subset_id=1&fvd=n1&v=3) format("woff"),url(https://use.typekit.net/af/d91137/00000000000000003b9ad1bd/27/a?subset_id=1&fvd=n1&v=3) format("opentype");font-weight:100;font-style:normal;}@font-face{font-family:tk-proxima-nova-i1;src:url(https://use.typekit.net/af/830a06/00000000000000003b9ad1be/27/l?subset_id=1&fvd=i1&v=3) format("woff2"),url(https://use.typekit.net/af/830a06/00000000000000003b9ad1be/27/d?subset_id=1&fvd=i1&v=3) format("woff"),url(https://use.typekit.net/af/830a06/00000000000000003b9ad1be/27/a?subset_id=1&fvd=i1&v=3) format("opentype");font-weight:100;font-style:italic;}@font-face{font-family:tk-proxima-nova-n6;src:url(https://use.typekit.net/af/752410/00000000000000003b9ad1bb/27/l?subset_id=1&fvd=n6&v=3) format("woff2"),url(https://use.typekit.net/af/752410/00000000000000003b9ad1bb/27/d?subset_id=1&fvd=n6&v=3) format("woff"),url(https://use.typekit.net/af/752410/00000000000000003b9ad1bb/27/a?subset_id=1&fvd=n6&v=3) format("opentype");font-weight:600;font-style:normal;}@font-face{font-family:tk-proxima-nova-i6;src:url(https://use.typekit.net/af/9b924f/00000000000000003b9ad1bc/27/l?subset_id=1&fvd=i6&v=3) format("woff2"),url(https://use.typekit.net/af/9b924f/00000000000000003b9ad1bc/27/d?subset_id=1&fvd=i6&v=3) format("woff"),url(https://use.typekit.net/af/9b924f/00000000000000003b9ad1bc/27/a?subset_id=1&fvd=i6&v=3) format("opentype");font-weight:600;font-style:italic;}@font-face{font-family:tk-proxima-nova-n4;src:url(https://use.typekit.net/af/a3ca77/00000000000000003b9ad1b9/27/l?subset_id=1&fvd=n4&v=3) format("woff2"),url(https://use.typekit.net/af/a3ca77/00000000000000003b9ad1b9/27/d?subset_id=1&fvd=n4&v=3) format("woff"),url(https://use.typekit.net/af/a3ca77/00000000000000003b9ad1b9/27/a?subset_id=1&fvd=n4&v=3) format("opentype");font-weight:400;font-style:normal;}@font-face{font-family:tk-proxima-nova-i4;src:url(https://use.typekit.net/af/98849f/00000000000000003b9ad1ba/27/l?subset_id=1&fvd=i4&v=3) format("woff2"),url(https://use.typekit.net/af/98849f/00000000000000003b9ad1ba/27/d?subset_id=1&fvd=i4&v=3) format("woff"),url(https://use.typekit.net/af/98849f/00000000000000003b9ad1ba/27/a?subset_id=1&fvd=i4&v=3) format("opentype");font-weight:400;font-style:italic;}@font-face{font-family:tk-proxima-nova-n3;src:url(https://use.typekit.net/af/0e059c/00000000000000003b9ad1b5/27/l?subset_id=1&fvd=n3&v=3) format("woff2"),url(https://use.typekit.net/af/0e059c/00000000000000003b9ad1b5/27/d?subset_id=1&fvd=n3&v=3) format("woff"),url(https://use.typekit.net/af/0e059c/00000000000000003b9ad1b5/27/a?subset_id=1&fvd=n3&v=3) format("opentype");font-weight:300;font-style:normal;}@font-face{font-family:tk-proxima-nova-i3;src:url(https://use.typekit.net/af/2df38e/00000000000000003b9ad1b6/27/l?subset_id=1&fvd=i3&v=3) format("woff2"),url(https://use.typekit.net/af/2df38e/00000000000000003b9ad1b6/27/d?subset_id=1&fvd=i3&v=3) format("woff"),url(https://use.typekit.net/af/2df38e/00000000000000003b9ad1b6/27/a?subset_id=1&fvd=i3&v=3) format("opentype");font-weight:300;font-style:italic;}@font-face{font-family:tk-proxima-nova-n5;src:url(https://use.typekit.net/af/9e3ba4/00000000000000003b9ad1b7/27/l?subset_id=1&fvd=n5&v=3) format("woff2"),url(https://use.typekit.net/af/9e3ba4/00000000000000003b9ad1b7/27/d?subset_id=1&fvd=n5&v=3) format("woff"),url(https://use.typekit.net/af/9e3ba4/00000000000000003b9ad1b7/27/a?subset_id=1&fvd=n5&v=3) format("opentype");font-weight:500;font-style:normal;}@font-face{font-family:tk-proxima-nova-i5;src:url(https://use.typekit.net/af/16e5af/00000000000000003b9ad1b8/27/l?subset_id=1&fvd=i5&v=3) format("woff2"),url(https://use.typekit.net/af/16e5af/00000000000000003b9ad1b8/27/d?subset_id=1&fvd=i5&v=3) format("woff"),url(https://use.typekit.net/af/16e5af/00000000000000003b9ad1b8/27/a?subset_id=1&fvd=i5&v=3) format("opentype");font-weight:500;font-style:italic;}@font-face{font-family:tk-pt-serif-n4;src:url(https://use.typekit.net/af/47537f/000000000000000000012500/27/l?subset_id=1&fvd=n4&v=3) format("woff2"),url(https://use.typekit.net/af/47537f/000000000000000000012500/27/d?subset_id=1&fvd=n4&v=3) format("woff"),url(https://use.typekit.net/af/47537f/000000000000000000012500/27/a?subset_id=1&fvd=n4&v=3) format("opentype");font-weight:400;font-style:normal;}@font-face{font-family:tk-pt-serif-i4;src:url(https://use.typekit.net/af/aa7e1c/0000000000000000000124fe/27/l?subset_id=1&fvd=i4&v=3) format("woff2"),url(https://use.typekit.net/af/aa7e1c/0000000000000000000124fe/27/d?subset_id=1&fvd=i4&v=3) format("woff"),url(https://use.typekit.net/af/aa7e1c/0000000000000000000124fe/27/a?subset_id=1&fvd=i4&v=3) format("opentype");font-weight:400;font-style:italic;}@font-face{font-family:tk-pt-serif-n7;src:url(https://use.typekit.net/af/9c5b9c/0000000000000000000124ff/27/l?subset_id=1&fvd=n7&v=3) format("woff2"),url(https://use.typekit.net/af/9c5b9c/0000000000000000000124ff/27/d?subset_id=1&fvd=n7&v=3) format("woff"),url(https://use.typekit.net/af/9c5b9c/0000000000000000000124ff/27/a?subset_id=1&fvd=n7&v=3) format("opentype");font-weight:700;font-style:normal;}@font-face{font-family:tk-pt-serif-i7;src:url(https://use.typekit.net/af/3055d6/0000000000000000000124fd/27/l?subset_id=1&fvd=i7&v=3) format("woff2"),url(https://use.typekit.net/af/3055d6/0000000000000000000124fd/27/d?subset_id=1&fvd=i7&v=3) format("woff"),url(https://use.typekit.net/af/3055d6/0000000000000000000124fd/27/a?subset_id=1&fvd=i7&v=3) format("opentype");font-weight:700;font-style:italic;}@font-face{font-family:tk-brandon-grotesque-n3;src:url(https://use.typekit.net/af/b8bab8/0000000000000000000132dd/27/l?subset_id=1&fvd=n3&v=3) format("woff2"),url(https://use.typekit.net/af/b8bab8/0000000000000000000132dd/27/d?subset_id=1&fvd=n3&v=3) format("woff"),url(https://use.typekit.net/af/b8bab8/0000000000000000000132dd/27/a?subset_id=1&fvd=n3&v=3) format("opentype");font-weight:300;font-style:normal;}@font-face{font-family:tk-brandon-grotesque-i3;src:url(https://use.typekit.net/af/601bce/0000000000000000000132de/27/l?subset_id=1&fvd=i3&v=3) format("woff2"),url(https://use.typekit.net/af/601bce/0000000000000000000132de/27/d?subset_id=1&fvd=i3&v=3) format("woff"),url(https://use.typekit.net/af/601bce/0000000000000000000132de/27/a?subset_id=1&fvd=i3&v=3) format("opentype");font-weight:300;font-style:italic;}@font-face{font-family:tk-brandon-grotesque-n5;src:url(https://use.typekit.net/af/6af1b3/0000000000000000000132e1/27/l?subset_id=1&fvd=n5&v=3) format("woff2"),url(https://use.typekit.net/af/6af1b3/0000000000000000000132e1/27/d?subset_id=1&fvd=n5&v=3) format("woff"),url(https://use.typekit.net/af/6af1b3/0000000000000000000132e1/27/a?subset_id=1&fvd=n5&v=3) format("opentype");font-weight:500;font-style:normal;}@font-face{font-family:tk-brandon-grotesque-i5;src:url(https://use.typekit.net/af/d52733/0000000000000000000132e2/27/l?subset_id=1&fvd=i5&v=3) format("woff2"),url(https://use.typekit.net/af/d52733/0000000000000000000132e2/27/d?subset_id=1&fvd=i5&v=3) format("woff"),url(https://use.typekit.net/af/d52733/0000000000000000000132e2/27/a?subset_id=1&fvd=i5&v=3) format("opentype");font-weight:500;font-style:italic;}@font-face{font-family:tk-reklame-script-n4;src:url(https://use.typekit.net/af/347657/00000000000000003b9ad2f8/27/l?subset_id=1&fvd=n4&v=3) format("woff2"),url(https://use.typekit.net/af/347657/00000000000000003b9ad2f8/27/d?subset_id=1&fvd=n4&v=3) format("woff"),url(https://use.typekit.net/af/347657/00000000000000003b9ad2f8/27/a?subset_id=1&fvd=n4&v=3) format("opentype");font-weight:400;font-style:normal;}@font-face{font-family:tk-reklame-script-n7;src:url(https://use.typekit.net/af/e14ef0/00000000000000003b9ad2fa/27/l?subset_id=1&fvd=n7&v=3) format("woff2"),url(https://use.typekit.net/af/e14ef0/00000000000000003b9ad2fa/27/d?subset_id=1&fvd=n7&v=3) format("woff"),url(https://use.typekit.net/af/e14ef0/00000000000000003b9ad2fa/27/a?subset_id=1&fvd=n7&v=3) format("opentype");font-weight:700;font-style:normal;}@font-face{font-family:tk-fira-sans-n4;src:url(https://use.typekit.net/af/193346/000000000000000000015891/27/l?subset_id=1&fvd=n4&v=3) format("woff2"),url(https://use.typekit.net/af/193346/000000000000000000015891/27/d?subset_id=1&fvd=n4&v=3) format("woff"),url(https://use.typekit.net/af/193346/000000000000000000015891/27/a?subset_id=1&fvd=n4&v=3) format("opentype");font-weight:400;font-style:normal;}@font-face{font-family:tk-fira-sans-i4;src:url(https://use.typekit.net/af/7b374f/000000000000000000015892/27/l?subset_id=1&fvd=i4&v=3) format("woff2"),url(https://use.typekit.net/af/7b374f/000000000000000000015892/27/d?subset_id=1&fvd=i4&v=3) format("woff"),url(https://use.typekit.net/af/7b374f/000000000000000000015892/27/a?subset_id=1&fvd=i4&v=3) format("opentype");font-weight:400;font-style:italic;}@font-face{font-family:tk-fira-sans-n3;src:url(https://use.typekit.net/af/066512/00000000000000000001588f/27/l?subset_id=1&fvd=n3&v=3) format("woff2"),url(https://use.typekit.net/af/066512/00000000000000000001588f/27/d?subset_id=1&fvd=n3&v=3) format("woff"),url(https://use.typekit.net/af/066512/00000000000000000001588f/27/a?subset_id=1&fvd=n3&v=3) format("opentype");font-weight:300;font-style:normal;}@font-face{font-family:tk-fira-sans-i3;src:url(https://use.typekit.net/af/5bc5ca/000000000000000000015890/27/l?subset_id=1&fvd=i3&v=3) format("woff2"),url(https://use.typekit.net/af/5bc5ca/000000000000000000015890/27/d?subset_id=1&fvd=i3&v=3) format("woff"),url(https://use.typekit.net/af/5bc5ca/000000000000000000015890/27/a?subset_id=1&fvd=i3&v=3) format("opentype");font-weight:300;font-style:italic;}@font-face{font-family:tk-fira-sans-n7;src:url(https://use.typekit.net/af/e6a673/000000000000000000015895/27/l?subset_id=1&fvd=n7&v=3) format("woff2"),url(https://use.typekit.net/af/e6a673/000000000000000000015895/27/d?subset_id=1&fvd=n7&v=3) format("woff"),url(https://use.typekit.net/af/e6a673/000000000000000000015895/27/a?subset_id=1&fvd=n7&v=3) format("opentype");font-weight:700;font-style:normal;}@font-face{font-family:tk-fira-sans-i7;src:url(https://use.typekit.net/af/79310d/000000000000000000015896/27/l?subset_id=1&fvd=i7&v=3) format("woff2"),url(https://use.typekit.net/af/79310d/000000000000000000015896/27/d?subset_id=1&fvd=i7&v=3) format("woff"),url(https://use.typekit.net/af/79310d/000000000000000000015896/27/a?subset_id=1&fvd=i7&v=3) format("opentype");font-weight:700;font-style:italic;}</style><script>try{Typekit.load({ async: true });}catch(e){}</script>
+<!-- End TypeKit Embed Code -->
+<style type="text/css">@font-face{font-family:proxima-nova;src:url(https://use.typekit.net/af/9a08b4/00000000000000003b9ad1af/27/l?subset_id=1&fvd=n9&v=3) format("woff2"),url(https://use.typekit.net/af/9a08b4/00000000000000003b9ad1af/27/d?subset_id=1&fvd=n9&v=3) format("woff"),url(https://use.typekit.net/af/9a08b4/00000000000000003b9ad1af/27/a?subset_id=1&fvd=n9&v=3) format("opentype");font-weight:900;font-style:normal;}@font-face{font-family:proxima-nova;src:url(https://use.typekit.net/af/4e7f74/00000000000000003b9ad1b0/27/l?subset_id=1&fvd=i9&v=3) format("woff2"),url(https://use.typekit.net/af/4e7f74/00000000000000003b9ad1b0/27/d?subset_id=1&fvd=i9&v=3) format("woff"),url(https://use.typekit.net/af/4e7f74/00000000000000003b9ad1b0/27/a?subset_id=1&fvd=i9&v=3) format("opentype");font-weight:900;font-style:italic;}@font-face{font-family:proxima-nova;src:url(https://use.typekit.net/af/2793a0/00000000000000003b9ad1b1/27/l?subset_id=1&fvd=n7&v=3) format("woff2"),url(https://use.typekit.net/af/2793a0/00000000000000003b9ad1b1/27/d?subset_id=1&fvd=n7&v=3) format("woff"),url(https://use.typekit.net/af/2793a0/00000000000000003b9ad1b1/27/a?subset_id=1&fvd=n7&v=3) format("opentype");font-weight:700;font-style:normal;}@font-face{font-family:proxima-nova;src:url(https://use.typekit.net/af/f3c752/00000000000000003b9ad1b2/27/l?subset_id=1&fvd=i7&v=3) format("woff2"),url(https://use.typekit.net/af/f3c752/00000000000000003b9ad1b2/27/d?subset_id=1&fvd=i7&v=3) format("woff"),url(https://use.typekit.net/af/f3c752/00000000000000003b9ad1b2/27/a?subset_id=1&fvd=i7&v=3) format("opentype");font-weight:700;font-style:italic;}@font-face{font-family:proxima-nova;src:url(https://use.typekit.net/af/085d88/00000000000000003b9ad1b3/27/l?subset_id=1&fvd=n8&v=3) format("woff2"),url(https://use.typekit.net/af/085d88/00000000000000003b9ad1b3/27/d?subset_id=1&fvd=n8&v=3) format("woff"),url(https://use.typekit.net/af/085d88/00000000000000003b9ad1b3/27/a?subset_id=1&fvd=n8&v=3) format("opentype");font-weight:800;font-style:normal;}@font-face{font-family:proxima-nova;src:url(https://use.typekit.net/af/03908a/00000000000000003b9ad1b4/27/l?subset_id=1&fvd=i8&v=3) format("woff2"),url(https://use.typekit.net/af/03908a/00000000000000003b9ad1b4/27/d?subset_id=1&fvd=i8&v=3) format("woff"),url(https://use.typekit.net/af/03908a/00000000000000003b9ad1b4/27/a?subset_id=1&fvd=i8&v=3) format("opentype");font-weight:800;font-style:italic;}@font-face{font-family:proxima-nova;src:url(https://use.typekit.net/af/d91137/00000000000000003b9ad1bd/27/l?subset_id=1&fvd=n1&v=3) format("woff2"),url(https://use.typekit.net/af/d91137/00000000000000003b9ad1bd/27/d?subset_id=1&fvd=n1&v=3) format("woff"),url(https://use.typekit.net/af/d91137/00000000000000003b9ad1bd/27/a?subset_id=1&fvd=n1&v=3) format("opentype");font-weight:100;font-style:normal;}@font-face{font-family:proxima-nova;src:url(https://use.typekit.net/af/830a06/00000000000000003b9ad1be/27/l?subset_id=1&fvd=i1&v=3) format("woff2"),url(https://use.typekit.net/af/830a06/00000000000000003b9ad1be/27/d?subset_id=1&fvd=i1&v=3) format("woff"),url(https://use.typekit.net/af/830a06/00000000000000003b9ad1be/27/a?subset_id=1&fvd=i1&v=3) format("opentype");font-weight:100;font-style:italic;}@font-face{font-family:proxima-nova;src:url(https://use.typekit.net/af/752410/00000000000000003b9ad1bb/27/l?subset_id=1&fvd=n6&v=3) format("woff2"),url(https://use.typekit.net/af/752410/00000000000000003b9ad1bb/27/d?subset_id=1&fvd=n6&v=3) format("woff"),url(https://use.typekit.net/af/752410/00000000000000003b9ad1bb/27/a?subset_id=1&fvd=n6&v=3) format("opentype");font-weight:600;font-style:normal;}@font-face{font-family:proxima-nova;src:url(https://use.typekit.net/af/9b924f/00000000000000003b9ad1bc/27/l?subset_id=1&fvd=i6&v=3) format("woff2"),url(https://use.typekit.net/af/9b924f/00000000000000003b9ad1bc/27/d?subset_id=1&fvd=i6&v=3) format("woff"),url(https://use.typekit.net/af/9b924f/00000000000000003b9ad1bc/27/a?subset_id=1&fvd=i6&v=3) format("opentype");font-weight:600;font-style:italic;}@font-face{font-family:proxima-nova;src:url(https://use.typekit.net/af/a3ca77/00000000000000003b9ad1b9/27/l?subset_id=1&fvd=n4&v=3) format("woff2"),url(https://use.typekit.net/af/a3ca77/00000000000000003b9ad1b9/27/d?subset_id=1&fvd=n4&v=3) format("woff"),url(https://use.typekit.net/af/a3ca77/00000000000000003b9ad1b9/27/a?subset_id=1&fvd=n4&v=3) format("opentype");font-weight:400;font-style:normal;}@font-face{font-family:proxima-nova;src:url(https://use.typekit.net/af/98849f/00000000000000003b9ad1ba/27/l?subset_id=1&fvd=i4&v=3) format("woff2"),url(https://use.typekit.net/af/98849f/00000000000000003b9ad1ba/27/d?subset_id=1&fvd=i4&v=3) format("woff"),url(https://use.typekit.net/af/98849f/00000000000000003b9ad1ba/27/a?subset_id=1&fvd=i4&v=3) format("opentype");font-weight:400;font-style:italic;}@font-face{font-family:proxima-nova;src:url(https://use.typekit.net/af/0e059c/00000000000000003b9ad1b5/27/l?subset_id=1&fvd=n3&v=3) format("woff2"),url(https://use.typekit.net/af/0e059c/00000000000000003b9ad1b5/27/d?subset_id=1&fvd=n3&v=3) format("woff"),url(https://use.typekit.net/af/0e059c/00000000000000003b9ad1b5/27/a?subset_id=1&fvd=n3&v=3) format("opentype");font-weight:300;font-style:normal;}@font-face{font-family:proxima-nova;src:url(https://use.typekit.net/af/2df38e/00000000000000003b9ad1b6/27/l?subset_id=1&fvd=i3&v=3) format("woff2"),url(https://use.typekit.net/af/2df38e/00000000000000003b9ad1b6/27/d?subset_id=1&fvd=i3&v=3) format("woff"),url(https://use.typekit.net/af/2df38e/00000000000000003b9ad1b6/27/a?subset_id=1&fvd=i3&v=3) format("opentype");font-weight:300;font-style:italic;}@font-face{font-family:proxima-nova;src:url(https://use.typekit.net/af/9e3ba4/00000000000000003b9ad1b7/27/l?subset_id=1&fvd=n5&v=3) format("woff2"),url(https://use.typekit.net/af/9e3ba4/00000000000000003b9ad1b7/27/d?subset_id=1&fvd=n5&v=3) format("woff"),url(https://use.typekit.net/af/9e3ba4/00000000000000003b9ad1b7/27/a?subset_id=1&fvd=n5&v=3) format("opentype");font-weight:500;font-style:normal;}@font-face{font-family:proxima-nova;src:url(https://use.typekit.net/af/16e5af/00000000000000003b9ad1b8/27/l?subset_id=1&fvd=i5&v=3) format("woff2"),url(https://use.typekit.net/af/16e5af/00000000000000003b9ad1b8/27/d?subset_id=1&fvd=i5&v=3) format("woff"),url(https://use.typekit.net/af/16e5af/00000000000000003b9ad1b8/27/a?subset_id=1&fvd=i5&v=3) format("opentype");font-weight:500;font-style:italic;}@font-face{font-family:pt-serif;src:url(https://use.typekit.net/af/47537f/000000000000000000012500/27/l?subset_id=1&fvd=n4&v=3) format("woff2"),url(https://use.typekit.net/af/47537f/000000000000000000012500/27/d?subset_id=1&fvd=n4&v=3) format("woff"),url(https://use.typekit.net/af/47537f/000000000000000000012500/27/a?subset_id=1&fvd=n4&v=3) format("opentype");font-weight:400;font-style:normal;}@font-face{font-family:pt-serif;src:url(https://use.typekit.net/af/aa7e1c/0000000000000000000124fe/27/l?subset_id=1&fvd=i4&v=3) format("woff2"),url(https://use.typekit.net/af/aa7e1c/0000000000000000000124fe/27/d?subset_id=1&fvd=i4&v=3) format("woff"),url(https://use.typekit.net/af/aa7e1c/0000000000000000000124fe/27/a?subset_id=1&fvd=i4&v=3) format("opentype");font-weight:400;font-style:italic;}@font-face{font-family:pt-serif;src:url(https://use.typekit.net/af/9c5b9c/0000000000000000000124ff/27/l?subset_id=1&fvd=n7&v=3) format("woff2"),url(https://use.typekit.net/af/9c5b9c/0000000000000000000124ff/27/d?subset_id=1&fvd=n7&v=3) format("woff"),url(https://use.typekit.net/af/9c5b9c/0000000000000000000124ff/27/a?subset_id=1&fvd=n7&v=3) format("opentype");font-weight:700;font-style:normal;}@font-face{font-family:pt-serif;src:url(https://use.typekit.net/af/3055d6/0000000000000000000124fd/27/l?subset_id=1&fvd=i7&v=3) format("woff2"),url(https://use.typekit.net/af/3055d6/0000000000000000000124fd/27/d?subset_id=1&fvd=i7&v=3) format("woff"),url(https://use.typekit.net/af/3055d6/0000000000000000000124fd/27/a?subset_id=1&fvd=i7&v=3) format("opentype");font-weight:700;font-style:italic;}@font-face{font-family:brandon-grotesque;src:url(https://use.typekit.net/af/b8bab8/0000000000000000000132dd/27/l?subset_id=1&fvd=n3&v=3) format("woff2"),url(https://use.typekit.net/af/b8bab8/0000000000000000000132dd/27/d?subset_id=1&fvd=n3&v=3) format("woff"),url(https://use.typekit.net/af/b8bab8/0000000000000000000132dd/27/a?subset_id=1&fvd=n3&v=3) format("opentype");font-weight:300;font-style:normal;}@font-face{font-family:brandon-grotesque;src:url(https://use.typekit.net/af/601bce/0000000000000000000132de/27/l?subset_id=1&fvd=i3&v=3) format("woff2"),url(https://use.typekit.net/af/601bce/0000000000000000000132de/27/d?subset_id=1&fvd=i3&v=3) format("woff"),url(https://use.typekit.net/af/601bce/0000000000000000000132de/27/a?subset_id=1&fvd=i3&v=3) format("opentype");font-weight:300;font-style:italic;}@font-face{font-family:brandon-grotesque;src:url(https://use.typekit.net/af/6af1b3/0000000000000000000132e1/27/l?subset_id=1&fvd=n5&v=3) format("woff2"),url(https://use.typekit.net/af/6af1b3/0000000000000000000132e1/27/d?subset_id=1&fvd=n5&v=3) format("woff"),url(https://use.typekit.net/af/6af1b3/0000000000000000000132e1/27/a?subset_id=1&fvd=n5&v=3) format("opentype");font-weight:500;font-style:normal;}@font-face{font-family:brandon-grotesque;src:url(https://use.typekit.net/af/d52733/0000000000000000000132e2/27/l?subset_id=1&fvd=i5&v=3) format("woff2"),url(https://use.typekit.net/af/d52733/0000000000000000000132e2/27/d?subset_id=1&fvd=i5&v=3) format("woff"),url(https://use.typekit.net/af/d52733/0000000000000000000132e2/27/a?subset_id=1&fvd=i5&v=3) format("opentype");font-weight:500;font-style:italic;}@font-face{font-family:reklame-script;src:url(https://use.typekit.net/af/347657/00000000000000003b9ad2f8/27/l?subset_id=1&fvd=n4&v=3) format("woff2"),url(https://use.typekit.net/af/347657/00000000000000003b9ad2f8/27/d?subset_id=1&fvd=n4&v=3) format("woff"),url(https://use.typekit.net/af/347657/00000000000000003b9ad2f8/27/a?subset_id=1&fvd=n4&v=3) format("opentype");font-weight:400;font-style:normal;}@font-face{font-family:reklame-script;src:url(https://use.typekit.net/af/e14ef0/00000000000000003b9ad2fa/27/l?subset_id=1&fvd=n7&v=3) format("woff2"),url(https://use.typekit.net/af/e14ef0/00000000000000003b9ad2fa/27/d?subset_id=1&fvd=n7&v=3) format("woff"),url(https://use.typekit.net/af/e14ef0/00000000000000003b9ad2fa/27/a?subset_id=1&fvd=n7&v=3) format("opentype");font-weight:700;font-style:normal;}@font-face{font-family:fira-sans;src:url(https://use.typekit.net/af/193346/000000000000000000015891/27/l?subset_id=1&fvd=n4&v=3) format("woff2"),url(https://use.typekit.net/af/193346/000000000000000000015891/27/d?subset_id=1&fvd=n4&v=3) format("woff"),url(https://use.typekit.net/af/193346/000000000000000000015891/27/a?subset_id=1&fvd=n4&v=3) format("opentype");font-weight:400;font-style:normal;}@font-face{font-family:fira-sans;src:url(https://use.typekit.net/af/7b374f/000000000000000000015892/27/l?subset_id=1&fvd=i4&v=3) format("woff2"),url(https://use.typekit.net/af/7b374f/000000000000000000015892/27/d?subset_id=1&fvd=i4&v=3) format("woff"),url(https://use.typekit.net/af/7b374f/000000000000000000015892/27/a?subset_id=1&fvd=i4&v=3) format("opentype");font-weight:400;font-style:italic;}@font-face{font-family:fira-sans;src:url(https://use.typekit.net/af/066512/00000000000000000001588f/27/l?subset_id=1&fvd=n3&v=3) format("woff2"),url(https://use.typekit.net/af/066512/00000000000000000001588f/27/d?subset_id=1&fvd=n3&v=3) format("woff"),url(https://use.typekit.net/af/066512/00000000000000000001588f/27/a?subset_id=1&fvd=n3&v=3) format("opentype");font-weight:300;font-style:normal;}@font-face{font-family:fira-sans;src:url(https://use.typekit.net/af/5bc5ca/000000000000000000015890/27/l?subset_id=1&fvd=i3&v=3) format("woff2"),url(https://use.typekit.net/af/5bc5ca/000000000000000000015890/27/d?subset_id=1&fvd=i3&v=3) format("woff"),url(https://use.typekit.net/af/5bc5ca/000000000000000000015890/27/a?subset_id=1&fvd=i3&v=3) format("opentype");font-weight:300;font-style:italic;}@font-face{font-family:fira-sans;src:url(https://use.typekit.net/af/e6a673/000000000000000000015895/27/l?subset_id=1&fvd=n7&v=3) format("woff2"),url(https://use.typekit.net/af/e6a673/000000000000000000015895/27/d?subset_id=1&fvd=n7&v=3) format("woff"),url(https://use.typekit.net/af/e6a673/000000000000000000015895/27/a?subset_id=1&fvd=n7&v=3) format("opentype");font-weight:700;font-style:normal;}@font-face{font-family:fira-sans;src:url(https://use.typekit.net/af/79310d/000000000000000000015896/27/l?subset_id=1&fvd=i7&v=3) format("woff2"),url(https://use.typekit.net/af/79310d/000000000000000000015896/27/d?subset_id=1&fvd=i7&v=3) format("woff"),url(https://use.typekit.net/af/79310d/000000000000000000015896/27/a?subset_id=1&fvd=i7&v=3) format("opentype");font-weight:700;font-style:italic;}</style><script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+			(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+			m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+			})(window,document,'script','//www.google-analytics.com/analytics.js','ga');ga('create', 'UA-797705-6', 'auto',{"name":"wnd_header"});ga('wnd_header.set', 'dimension1', 'W2');ga('wnd_header.set', 'anonymizeIp', true);ga('wnd_header.send', 'pageview');</script></head><body class="layout-01 wtf-homepage desktop">
+	<div class="wnd-page cf section-white">
+
+		<div id="wrapper-bg">
+			<div class="section-bg-layer bgpos-center-center">
+				
+			</div>
+			<div class="section-bg-layer section-bg-overlay overlay-black-light"></div>
+		</div>
+
+		<div id="wrapper">
+
+			<header id="header">
+
+				<div class="section-wrapper cf">
+	<div class="section-wrapper-content cf"><div wn-border="bottom" wn-border-element="section-inner" class="section header header-01 cf design-01 section-none">
+	<div class="section-inner border-bottom">
+		<div class="nav-line cf">
+
+			<div class="logo logo-default wnd-font-size-80 abril-fatface wnd-logo-with-text">
+    <div class="logo-content">
+        
+            
+            
+	        <div class="text-content-outer">
+                <span class="text-content"><font class="wnd-font-size-180">Infiniswap</font></span>
+	        </div>
+        
+    </div>
+</div>
+
+			<nav id="menu" role="navigation"><div>
+	<a href="http://infiniswap2.webnode.com/#" class="close-menu" rel="nofollow">
+		<span>Close Menu</span>
+	</a>
+	<span class="more-text">More</span>
+</div></nav><script type="application/javascript">var el=document.getElementById("menu");"undefined"!=typeof el&&(el.style.display="none")</script><div id="menu-mobile" class="hidden">
+				<a href="http://infiniswap2.webnode.com/#" id="menu-submit"><span></span>Menu</a>
+			</div>
+
+		</div>
+	</div>
+</div></div>
+</div>
+
+			</header><main id="main" role="main">
+
+				<div class="section-wrapper cf">
+	<div class="section-wrapper-content cf"><section class="section default-01 design-01 section-none"><div class="section-bg">
+		<div class="section-bg-layer">
+			
+		</div>
+		<div class="section-bg-layer section-bg-overlay"></div>
+	</div>
+	<div class="section-inner">
+		<div class="content cf wnd-no-cols">
+	<div>
+		<div class="text cf design-01">
+    <div class="text-content"><h1>About Infiniswap</h1>
+
+<p>Memory-intensive applications suffer large performance loss when their working sets do not completely fit in the physical memory. Memory disaggregation can expose remote memory across a cluster to those applications and mitigate such loss. However, existing proposals call for new architectures and/or new programming models, making them infeasible.</p><p>We have developed a practical memory disaggregation solution, Infiniswap, which is a remote memory paging system for clusters with low-latency, kernel-bypass networks such as RDMA. Infiniswap opportunistically harvests and transparently exposes unused memory across the cluster to unmodified applications by dividing the swap space of each machine into many chunks and distributing them to unused memory of many remote machines. For scalability, it leverages the power of many choices to perform decentralized memory chunk placements and evictions. Applications using Infiniswap receive large performance boosts when their working sets are larger than their physical memory allocations.</p>
+</div>
+</div>
+	</div>
+	
+</div>
+	</div>
+</section><section class="section default-01 design-01 section-none"><div class="section-bg">
+		<div class="section-bg-layer">
+			
+		</div>
+		<div class="section-bg-layer section-bg-overlay"></div>
+	</div>
+	<div class="section-inner">
+		<div class="content cf wnd-no-cols">
+	<div>
+		<div class="hr-line block design-01">
+	<hr>
+</div><div class="text cf design-01">
+    <div class="text-content"><h1>Motivation</h1>
+</div>
+</div><div class="text cf design-01">
+    <div class="text-content"><p>Modern operating systems (OSes) provide each applica- tion a virtual memory address space that is much larger than its physical memory allocation. Whenever an application addresses a virtual address whose corresponding virtual page does not reside in the physical memory, a <em>page fault </em>is raised. If there is not enough space in the physical memory for that virtual page, the virtual mem- ory manager (VMM) may need to <em>page out </em>one or more in-memory pages to a block device, which is known as the <em>swap space</em>. Subsequently, the VMM brings the missing page into the physical memory from the swap space; this is know as <em>paging in</em>.&nbsp;</p><p>We run several applications in its own container with different memory constraints. x% in the X-axes of Figure 1 refers to a run inside a container that can hold at most x% of the application's working set in memory, and x &lt; 100 forces paging in from/out to the machine's <em>swap space</em>. </p><p>
+</p><p>Figure 1 shows significant, non-linear impact on application performance due to paging. For example, a 25% reduction of memory results in a 5.5× and 2.1× throughput loss for VoltDB and Memcached; PowerGraph and GraphX worsen marginally. However, another 25% re- duction makes VoltDB, Memcached, PowerGraph, and GraphX up to 24×, 17×, 8×, and 23× worse, respectively. These gigantic performance degradations reflect the potential benefits that an efficient memory disaggregation system can deliver.&nbsp;</p>
+</div>
+</div><div class="image-block image-default block design-01 wnd-orientation-landscape wnd-type-image" style="margin-left:0;margin-right:0;" id="wnd_ImageBlock_8982">
+	<div class="image-content cf" style="padding-bottom:22.6%;text-align:center;">
+		<img src="./figure1-39.png" alt="" style="top:0%;left:0%;width:100%;height:100%;position:absolute;"><div class="embed-content">
+			</div>
+		<div class="image-title"><span></span></div>
+	</div>
+</div><div class="text cf design-01">
+    <div class="text-content"><p class="wnd-align-center">Figure 1: Performance of various applications among different memory constraints.</p></div>
+</div>
+	</div>
+	
+</div>
+	</div>
+</section><section class="section default-01 design-01 section-none"><div class="section-bg">
+		<div class="section-bg-layer">
+			
+		</div>
+		<div class="section-bg-layer section-bg-overlay"></div>
+	</div>
+	<div class="section-inner">
+		<div class="content cf">
+	<div>
+		<div class="hr-line block design-01">
+	<hr>
+</div><div class="text cf design-01">
+    <div class="text-content"><h1>Design Overview</h1>
+</div>
+</div><div class="text cf design-01">
+    <div class="text-content"><p>Infiniswap is a decentralized memory disaggregation solution for clusters with low-latency, kernel-bypass networks such as RDMA. The main goal of it is to <em style="font-size: 1.25rem;">efficiently expose all of a cluster's memory to user applications</em>. To avoid modifying existing applications or OSes, Infiniswap provides remote memory to local applications through the already-existing paging mechanism.</p><p>Infiniswap has two primary components -- the Infiniswap block device and the Infiniswap daemon -- that are present in every machine and work together without any central coordination (Figure 2).&nbsp;</p></div>
+</div><div class="image-block image-default block design-01 wnd-orientation-landscape wnd-type-image" style="margin-left:8.54%;margin-right:8.54%;" id="wnd_ImageBlock_82999">
+	<div class="image-content cf" style="padding-bottom:71.7%;text-align:center;">
+		<img src="./ISarchitecture.png" alt="" style="top:0%;left:0%;width:100%;height:100%;position:absolute;"><div class="embed-content">
+			</div>
+		<div class="image-title"><span></span></div>
+	</div>
+</div><div class="text cf design-01">
+    <div class="text-content"><p class="wnd-align-center">Figure 2: Infiniswap architecture.</p></div>
+</div><div class="column-wrapper cf">
+	<div><div class="column-content pr-0 pr-320 pr-365 pr-480" style="width:50%;">
+	<div><div class="text cf design-01">
+    <div class="text-content"><h2 class="wnd-align-left">Infiniswap Block Device</h2>
+
+<p class="wnd-align-left">The Infiniswap block device exposes conventional block device I/O interfaces to the virtual memory manager (VMM), which treats it as a fixed-size swap partition. The entire storage space of this device is logically partitioned into fixed-size <em>chunks</em>&nbsp;(ChunkSize), which are the units of remote mapping and load balancing in Infiniswap.&nbsp;</p><p>Infiniswap consults the status of remote memory mapping to handle paging requests. If a chunk is mapped to the remote memory, Infiniswap synchronously writes a page-out request for that chunk to remote memory using RDMA WRITE, while writing it asynchronously to the local disk. If it is not mapped, Infiniswap synchronously writes the page only to the local disk. For page-in requests, Infiniswap reads data from the appropriate source; it uses RDMA READ for remote memory.&nbsp;</p>
+</div>
+</div><div class="image-block image-default block design-01 wnd-orientation-landscape wnd-type-image" style="margin-left:0;margin-right:0;" id="wnd_ImageBlock_7440">
+	<div class="image-content cf" style="padding-bottom:47.99%;text-align:center;">
+		<img src="./b2d.png" alt="" style="top:0%;left:0%;width:100%;height:100%;position:absolute;"><div class="embed-content">
+			</div>
+		<div class="image-title"><span></span></div>
+	</div>
+</div></div>
+</div><div class="column-content pr-0 pr-320 pr-365 pr-480" style="width:50%;">
+	<div><div class="text cf design-01">
+    <div class="text-content"><h2 class="wnd-align-left">Infiniswap Daemon</h2>
+
+<p>On the Infiniswap daemon side, a chunk is a physical memory region of ChunkSize that is mapped to and used by an Infiniswap block device as remote memory. The Infiniswap  daemon only participates in control plane activities. It (i) responds to chunk-mapping re- quests from Infiniswap  block devices; (ii) preallocates its local memory when possible to minimize time over- heads in chunk-mapping initialization; and (iii) proactively evicts chunks, when necessary, to ensure minimal impact on local applications. All control plane communications take place using RDMA SEND/RECV.&nbsp;</p><p><br></p><p><br></p><p><br></p>
+</div>
+</div><div class="image-block image-default block design-01 wnd-orientation-landscape wnd-type-image" style="margin-left:0;margin-right:0;" id="wnd_ImageBlock_95479">
+	<div class="image-content cf" style="padding-bottom:47.52%;text-align:center;">
+		<img src="./d2b.png" alt="" style="top:0%;left:0%;width:100%;height:100%;position:absolute;"><div class="embed-content">
+			</div>
+		<div class="image-title"><span></span></div>
+	</div>
+</div></div>
+</div></div>
+</div><div class="text cf design-01">
+    <div class="text-content"><p class="wnd-align-center">Figure 3: Inifiswap block device and daemon.</p></div>
+</div>
+	</div>
+	
+</div>
+	</div>
+</section><section class="section default-01 design-01 section-none"><div class="section-bg">
+		<div class="section-bg-layer">
+			
+		</div>
+		<div class="section-bg-layer section-bg-overlay"></div>
+	</div>
+	<div class="section-inner">
+		<div class="content cf wnd-no-cols">
+	<div>
+		<div class="hr-line block design-01">
+	<hr>
+</div><div class="text cf design-01">
+    <div class="text-content"><h1>Evaluation</h1>
+
+<h2><font class="wnd-font-size-80">Infiniswap Performance as a Block Device&nbsp;</font></h2><p>Before focusing on Infiniswap's effectiveness as a decentralized remote paging system, we focus on its raw performance as a block device. We used fio -- a well-known disk benchmarking tool for these benchmarks.</p><p>We performed parameter sweeps by varying the number of threads in fio from 1 to 32 and I/O depth from 2 to 64. The left figure below shows the highest average bandwidth observed for different block sizes across all these parameter combinations for both block devices. In terms of bandwidth, Infiniswap Write performs better Read and saturates the 56 Gbps network at larger block sizes (Figure 4a).</p>
+<p>For remote cpu usage, we observed Infiniswap bypasses remote CPU in the data plane and has close to zero CPU overheads in the remote machine (Figure 4b).&nbsp;</p>
+</div>
+</div><div class="image-block image-default block design-01 wnd-orientation-landscape wnd-type-image" style="margin-left:12.92%;margin-right:12.92%;" id="wnd_ImageBlock_24781">
+	<div class="image-content cf" style="padding-bottom:44.96%;text-align:center;">
+		<img src="./micro_fig-7.png" alt="" style="top:0%;left:0%;width:100%;height:100%;position:absolute;"><div class="embed-content">
+			</div>
+		<div class="image-title"><span></span></div>
+	</div>
+</div><div class="text cf design-01">
+    <div class="text-content"><p class="wnd-align-center">Figure 4: Micro-benchmark results.</p></div>
+</div><div class="text cf design-01">
+    <div class="text-content"><h2><font class="wnd-font-size-80">Infiniswap's Impact on Applications</font></h2><p>Here, we focus on Inifiswap's performance on multiple memory-intensive applications with a variety of workloads (shown below) and compare it to that of disk.</p>
+<p><b>Workloads.</b> We used four memory-intensive application and workload combinations:</p><ol><li>TPC-C benchmark on VoltDB;<br></li><li>Facebook workloads on Memcached;<br></li><li>Twitter graphon PowerGraph; and<br></li><li>Twitter data on GraphX and Apache Spark.&nbsp;<br></li></ol><p><b>Methodology.</b> We focused on single-machine performance and considered three configurations -- 100%, 75%, and 50% -- or each application. We started with the 100% configuration by creating an <i>lxc</i> container with large enough memory to fit the entire workload in memory. We measured the peak memory usage, and then ran 75% and 50% configurations by creating containers with enough memory to fit those fractions of the peak usage. We use a single remote machine as the remote swap space for Infiniswap.</p><p>As shown in Figure 5 and 6, Infiniswap improves throughputs of unmodified VoltDB, Memcached, PowerGraph, GraphX, and Apache Spark by up to 4× to 15.4× over disk and tail latencies by up to 61×.&nbsp;</p></div>
+</div><div class="image-block image-default block design-01 wnd-orientation-landscape wnd-type-image" style="margin-left:0;margin-right:0;" id="wnd_ImageBlock_38345">
+	<div class="image-content cf" style="padding-bottom:22.76%;text-align:center;">
+		<img src="./IS_eval.png" alt="" style="top:0%;left:0%;width:100%;height:100%;position:absolute;"><div class="embed-content">
+			</div>
+		<div class="image-title"><span></span></div>
+	</div>
+</div><div class="text cf design-01">
+    <div class="text-content"><p class="wnd-align-center">Figure 5: Infiniswap performance for the same applications in Figure 1.</p></div>
+</div><div class="text cf design-01">
+    <div class="text-content"><h2><font class="wnd-font-size-80">Cluster-Wide Performance&nbsp;</font></h2><p>So far we have considered Infiniswap's performance
+for individual applications and analyzed its components.
+In this section, we then deploy Infiniswap on a 32-machine, 56 Gbps Infiniband cluster and observe whether these benefits hold
+in the presence of concurrency and at scale.</p><p><b>Methodology.</b> For this experiment, we used the same
+applications, workloads, and configurations to create about 90 <i>lxc</i> containers. We created
+an equal number of containers for each application-
+workload combination. About 50% of them were using
+the 100% configuration, close to 30% used the 75% configuration, and the rest used the 50% configuration. We placed these containers randomly across 32 machines to create an memory imbalance scenario and started all the containers at the same time. We measured completion times for
+the workload running each container; for VoltDB and
+Memcached completion time translates to transactions-
+or operations-per-second.&nbsp;</p><p>Figure 6a shows that Infiniswap increased total cluster memory utilization by 1.47× by increasing it to 60%
+on average from 40.8%. Moreover, Infiniswap significantly decreased memory imbalance (Figure 6b):
+the maximum-to-median utilization ratio decreased from
+2.36× to 1.6× and the maximum-to-minimum utilization ratio decreased from 22.5× to 2.7×.&nbsp;</p></div>
+</div><div class="image-block image-default block design-01 wnd-orientation-landscape wnd-type-image" style="margin-left:3.96%;margin-right:3.96%;" id="wnd_ImageBlock_54647">
+	<div class="image-content cf" style="padding-bottom:25.45%;text-align:center;">
+		<img src="./Util.png" alt="" style="top:0%;left:0%;width:100%;height:100%;position:absolute;"><div class="embed-content">
+			</div>
+		<div class="image-title"><span></span></div>
+	</div>
+</div><div class="text cf design-01">
+    <div class="text-content"><p class="wnd-align-center">Figure 6: Memory utilization in the cluster.</p></div>
+</div><div class="text cf design-01">
+    <div class="text-content"><p>Finally, Figure 7 shows the overall performance of Infiniswap. We observe that Infiniswap's benefits are not restricted only to microbenchmarks, and it works well in the presence of cluster dynamics of many applications. Although improvements are sometimes lower than those observed in controlled microbenchmarks, Infiniswap still provides 3×-6× improvements for the 50% configurations.&nbsp;<br></p></div>
+</div><div class="image-block image-default block design-01 wnd-orientation-landscape wnd-type-image" style="margin-left:0;margin-right:0;" id="wnd_ImageBlock_60869">
+	<div class="image-content cf" style="padding-bottom:27.5%;text-align:center;">
+		<img src="./app_cluster.png" alt="" style="top:0%;left:-1.71%;width:102.60869565217%;height:100%;position:absolute;"><div class="embed-content">
+			</div>
+		<div class="image-title"><span></span></div>
+	</div>
+</div><div class="text cf design-01">
+    <div class="text-content"><p class="wnd-align-center">Figure 7: Applications performance in the cluster using Infiniswap.</p></div>
+</div><div class="hr-line block design-01">
+	<hr>
+</div>
+	</div>
+	
+</div>
+	</div>
+</section><section class="section default-01 design-01 section-none"><div class="section-bg">
+		<div class="section-bg-layer">
+			
+		</div>
+		<div class="section-bg-layer section-bg-overlay"></div>
+	</div>
+	<div class="section-inner">
+		<div class="content cf wnd-no-cols">
+	<div>
+		<div class="text cf design-01">
+    <div class="text-content"><h1>Papers</h1>
+</div>
+</div><div class="text cf design-01">
+    <div class="text-content"><p>J. Gu, Y. Lee, Y. Zhang, M. Chowdhury, and K. G. Shin. <a href="http://www.mosharaf.com/wp-content/uploads/infiniswap-nsdi17.pdf" rel="nofollow" target="_blank">Efficient Memory Disaggregation with Infiniswap</a>. In NSDI, 2017.<br></p><p>Y. Zhang, J. Gu, Y. Lee, M. Chowdhury, and K. G. <a href="http://www.mosharaf.com/wp-content/uploads/fairdma-kbnets2017.pdf" rel="nofollow" target="_blank">Performance Isolation Anomalies in RDMA</a>. In KBNets, 2017.</p></div>
+</div>
+	</div>
+	
+</div>
+	</div>
+</section><section class="section default-01 design-01 section-none"><div class="section-bg">
+		<div class="section-bg-layer">
+			
+		</div>
+		<div class="section-bg-layer section-bg-overlay"></div>
+	</div>
+	<div class="section-inner">
+		<div class="content cf wnd-no-cols">
+	<div>
+		<div class="hr-line block design-01">
+	<hr>
+</div><div class="text cf design-01">
+    <div class="text-content"><h1>Contact</h1>
+</div>
+</div><div class="text cf design-01">
+    <div class="text-content"><p class="wnd-align-center"><font class="wsw-01 wnd-font-size-130">infiniswap@umich.edu</font></p></div>
+</div>
+	</div>
+	
+</div>
+	</div>
+</body></html>
