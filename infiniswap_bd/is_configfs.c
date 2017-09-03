@@ -47,7 +47,10 @@
 
 // bind in IS_device_item_ops
 static ssize_t device_attr_store(struct config_item *item,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+#else
 			         struct configfs_attribute *attr,
+#endif
 			         const char *page, size_t count)
 {
 	struct IS_session *IS_session;
@@ -76,7 +79,10 @@ static ssize_t device_attr_store(struct config_item *item,
 
 // bind in IS_device_item_ops
 static ssize_t state_attr_show(struct config_item *item,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+#else
 			       struct configfs_attribute *attr,
+#endif
 			       char *page)
 {
 	struct IS_file *IS_device;
@@ -91,17 +97,23 @@ static ssize_t state_attr_show(struct config_item *item,
 }
 
 // bind in IS_device_type
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+#else
 static struct configfs_item_operations IS_device_item_ops = {
 		.store_attribute = device_attr_store,
 		.show_attribute = state_attr_show,
 };
+#endif
 
 // bind in IS_device_item_attrs
 static struct configfs_attribute device_item_attr = {
 		.ca_owner       = THIS_MODULE,
 		.ca_name        = "device",
 		.ca_mode        = S_IWUGO,
-
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+		.show		= state_attr_show,
+		.store		= device_attr_store,
+#endif
 };
 // bind in IS_device_item_attrs
 static struct configfs_attribute state_item_attr = {
@@ -120,7 +132,10 @@ static struct configfs_attribute *IS_device_item_attrs[] = {
 
 // defined in IS_device_make_group
 static struct config_item_type IS_device_type = {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+#else
 		.ct_item_ops    = &IS_device_item_ops,
+#endif
 		.ct_attrs       = IS_device_item_attrs,
 		.ct_owner       = THIS_MODULE,
 };
@@ -176,7 +191,10 @@ static void IS_device_drop(struct config_group *group, struct config_item *item)
 
 // bind in IS_session_item_ops
 static ssize_t portal_attr_store(struct config_item *citem,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+#else
 		struct configfs_attribute *attr,
+#endif
 		const char *buf,size_t count)
 {
 	char rdma[MAX_PORTAL_NAME] = "rdma://" ;
@@ -206,16 +224,21 @@ static struct configfs_group_operations IS_session_devices_group_ops = {
 };
 
 // bind in IS_session_type
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+#else
 static struct configfs_item_operations IS_session_item_ops = {
 		.store_attribute = portal_attr_store,
 };
+#endif
 
 // bind in IS_session_item_attrs
 static struct configfs_attribute portal_item_attr = {
 		.ca_owner       = THIS_MODULE,
 		.ca_name        = "portal",
 		.ca_mode        = S_IWUGO,
-
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+		.store		= portal_attr_store,
+#endif		
 };
 // bind in IS_session_type
 static struct configfs_attribute *IS_session_item_attrs[] = {
@@ -225,7 +248,10 @@ static struct configfs_attribute *IS_session_item_attrs[] = {
 
 // bind in IS_session_make_group()
 static struct config_item_type IS_session_type = {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+#else
 		.ct_item_ops    = &IS_session_item_ops,
+#endif
 		.ct_attrs       = IS_session_item_attrs,
 		.ct_group_ops   = &IS_session_devices_group_ops,
 		.ct_owner       = THIS_MODULE,
