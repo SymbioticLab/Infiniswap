@@ -78,14 +78,18 @@ void IS_stackbd_end_io3(struct bio *bio, int err)
 
 static void stackbd_io_fn(struct bio *bio)
 {
-	 if (bio == NULL)
+	if (bio == NULL)
         printk("bio is NULL\n");
 
-    bio->bi_bdev = stackbd.bdev_raw;
-    trace_block_bio_remap(bdev_get_queue(stackbd.bdev_raw), bio,
-            bio->bi_bdev->bd_dev, bio->bi_sector);
-    
-    generic_make_request(bio);
+	bio->bi_bdev = stackbd.bdev_raw;
+	trace_block_bio_remap(bdev_get_queue(stackbd.bdev_raw), bio, bio->bi_bdev->bd_dev, 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+	bio->bi_iter.bi_sector);
+#else
+	bio->bi_sector);
+#endif 
+	
+	generic_make_request(bio);
 }
 static int stackbd_threadfn(void *data)
 {
@@ -157,7 +161,7 @@ void stackbd_make_request4(struct request_queue *q, struct request *req)
 	}
     bio = bio_clone(b, GFP_ATOMIC);
 	bio->bi_end_io = (bio_end_io_t*)IS_stackbd_end_io2;
-	bio->bi_private = uint64_from_ptr(req);
+	bio->bi_private = (void*) uint64_from_ptr(req);
     bio_list_add(&stackbd.bio_list, bio);
 
     wake_up(&req_event);
@@ -226,7 +230,7 @@ void stackbd_make_request2(struct request_queue *q, struct request *req)
 	}
     bio = bio_clone(b, GFP_ATOMIC);
 	bio->bi_end_io = (bio_end_io_t*)IS_stackbd_end_io;
-	bio->bi_private = uint64_from_ptr(req);
+	bio->bi_private = (void*) uint64_from_ptr(req);
     bio_list_add(&stackbd.bio_list, bio);
 
     wake_up(&req_event);
@@ -265,7 +269,12 @@ abort:
 static struct block_device *stackbd_bdev_open(char dev_path[])
 {
     /* Open underlying device */
-    struct block_device *bdev_raw = lookup_bdev(dev_path);
+   #if LINUX_VERSION_CODE == KERNEL_VERSION(4, 4, 0)
+        struct block_device *bdev_raw = lookup_bdev(dev_path, 0);
+   #else
+        struct block_device *bdev_raw = lookup_bdev(dev_path);
+   #endif 
+
     printk("Opened %s\n", dev_path);
     if (IS_ERR(bdev_raw))
     {
@@ -555,7 +564,12 @@ static int IS_init_hctx(struct blk_mq_hw_ctx *hctx, void *data,
 
 static struct blk_mq_ops IS_mq_ops = {
 	.queue_rq       = IS_queue_rq,
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
+	.map_queues      = blk_mq_map_queues,  
+#else
 	.map_queue      = blk_mq_map_queue,  
+#endif
 	.init_hctx	= IS_init_hctx,
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 16, 0)
 	.alloc_hctx	= IS_alloc_hctx,
@@ -695,7 +709,6 @@ int IS_register_block_device(struct IS_file *IS_file)
 	set_capacity(IS_file->disk, size);  // size is in remote file state->size, add size info into block device
 	sscanf(IS_file->dev_name, "%s", IS_file->disk->disk_name);
 	pr_err("%s, dev_name %s\n", __func__, IS_file->dev_name);
-	add_disk(IS_file->disk);
 
 	printk("IS: init done\n");
 	/* Set up our internal device */
@@ -734,7 +747,10 @@ int IS_register_block_device(struct IS_file *IS_file)
         printk("Kernel call returned: %m");
         err= -1;
     }
-	goto out;
+
+    add_disk(IS_file->disk);
+
+    goto out;
 
 alloc_disk:
 	blk_cleanup_queue(IS_file->queue);

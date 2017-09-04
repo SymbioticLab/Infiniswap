@@ -144,9 +144,11 @@ struct raio_iocb {
 #define SUBMIT_HEADER_SIZE (SUBMIT_BLOCK_SIZE +	    \
 			    LAST_IN_BATCH +	    \
 			    sizeof(struct raio_command))
-
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+#define MAX_SGL_LEN 1	/* kernel 4.x only supports single page request*/
+#else
 #define MAX_SGL_LEN 32	/* max pages in a single struct request (swap IO request) */
-
+#endif
 struct raio_io_u {
 	struct scatterlist  sgl[MAX_SGL_LEN];
 	struct raio_iocb		iocb;
@@ -175,7 +177,7 @@ struct raio_io_u {
 
 
 #define MAX_MSG_LEN	    512
-#define MAX_PORTAL_NAME	  2048
+#define MAX_PORTAL_NAME	  1024
 #define MAX_IS_DEV_NAME   256
 #define SUPPORTED_DISKS	    256
 #define SUPPORTED_PORTALS   5
@@ -350,7 +352,11 @@ struct kernel_cb {
 	DECLARE_PCI_UNMAP_ADDR(send_mapping)
 	struct ib_mr *send_mr;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+	struct ib_rdma_wr rdma_sq_wr;	/* rdma work request record */
+#else
 	struct ib_send_wr rdma_sq_wr;	/* rdma work request record */
+#endif
 	struct ib_sge rdma_sgl;		/* rdma single SGE */
 	char *rdma_buf;			/* used as rdma sink */
 	u64  rdma_dma_addr;
@@ -405,7 +411,11 @@ struct rdma_ctx {
 	struct IS_connection *IS_conn;
 	struct free_ctx_pool *free_ctxs;  //or this one
 	//struct mutex ctx_lock;	
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+	struct ib_rdma_wr rdma_sq_wr;	/* rdma work request record */
+#else
 	struct ib_send_wr rdma_sq_wr;	/* rdma work request record */
+#endif
 	struct ib_sge rdma_sgl;		/* rdma single SGE */
 	char *rdma_buf;			/* used as rdma sink */
 	u64  rdma_dma_addr;
@@ -515,8 +525,8 @@ struct IS_session {
 	unsigned long trigger_threshold;
 	spinlock_t write_ops_lock[STACKBD_SIZE_G];
 	spinlock_t read_ops_lock[STACKBD_SIZE_G];
-	float w_weight;
-	float cur_weight;
+	int w_weight;
+	int cur_weight;
 	atomic_t trigger_enable;
 };
 #define TRIGGER_ON 1
@@ -524,8 +534,8 @@ struct IS_session {
 
 #define RDMA_TRIGGER_PERIOD 1000  //1 second
 #define RDMA_TRIGGER_THRESHOLD 0 
-#define RDMA_W_WEIGHT 0.5
-#define RDMA_CUR_WEIGHT 0.8
+#define RDMA_W_WEIGHT 50
+#define RDMA_CUR_WEIGHT 80
 
 #define NO_CB_MAPPED -1
 // #define NUM_CB 1		moved to is_main.c
