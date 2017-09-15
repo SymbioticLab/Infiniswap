@@ -602,6 +602,7 @@ static int IS_cma_event_handler(struct rdma_cm_id *cma_id,
 
 	case RDMA_CM_EVENT_DEVICE_REMOVAL:	//this also should be treated as disconnection, and continue disk swap
 		printk(KERN_ERR PFX "cma detected device removal!!!!\n");
+		return -1;
 		break;
 
 	default:
@@ -1064,14 +1065,14 @@ static int IS_create_qp(struct kernel_cb *cb)
 	int ret;
 
 	memset(&init_attr, 0, sizeof(init_attr));
-	init_attr.cap.max_send_wr = cb->txdepth;
-	init_attr.cap.max_recv_wr = 10240;  
+	init_attr.cap.max_send_wr = cb->txdepth; /*FIXME: You may need to tune the maximum work request */
+	init_attr.cap.max_recv_wr = cb->txdepth;  
 	init_attr.cap.max_recv_sge = 1;
 	init_attr.cap.max_send_sge = 1;
+	init_attr.sq_sig_type = IB_SIGNAL_REQ_WR;
 	init_attr.qp_type = IB_QPT_RC;
 	init_attr.send_cq = cb->cq;
 	init_attr.recv_cq = cb->cq;
-	init_attr.sq_sig_type = IB_SIGNAL_REQ_WR;
 
 	ret = rdma_create_qp(cb->cm_id, cb->pd, &init_attr);
 	if (!ret)
