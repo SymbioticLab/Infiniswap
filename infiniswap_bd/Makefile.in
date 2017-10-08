@@ -1,8 +1,11 @@
 SHELL = /bin/sh
 INSTALL = /usr/bin/install -c
 mkdir_p = mkdir -p
-VERSION = 0.0
 build_dir = /lib/modules/$(shell uname -r)
+VERSION = @PACKAGE_VERSION@
+OFED_CFLAGS = @OFED_CFLAGS@
+KSYMVERS = @RDMA_SYMVERS@
+NOSTDINC_FLAGS += @OFED_CFLAGS@
 
 ismoduledir = /lib/modules/$(shell uname -r)/extra/infiniswap
 ismodule := infiniswap.ko
@@ -33,4 +36,4 @@ infiniswap-objs := 	\
 	is_main.o
 
 all-spec:
-	$(MAKE) -C $(build_dir)/build SUBDIRS=`pwd`  modules
+	$(MAKE) -C $(build_dir)/build SUBDIRS=`pwd` KBUILD_EXTRA_SYMBOLS="$(KSYMVERS)" @KERNELMAKE_PARAMS@ modules
