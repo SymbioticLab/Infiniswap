@@ -35,26 +35,29 @@ The Infiniswap codebase is organized under three directories.
 Important Parameters
 -----------
 
-Some important parameters in Infiniswap:  
-
+Some important parameters in Infiniswap using erasure coding for fault-tolerance:  
 * `infiniswap_bd/infiniswap.h`
-  * `BACKUP_DISK` [disk partition]  
-    It's the name of the backup disk in Infiniswap block device.  
-    How to check the disk partition status and list?  
-      "sudo fdisk -l"   
-  * `STACKBD_SIZE_G` [size in GB]  
-    It defines the size of Infiniswap block device (also backup disk).   
-  * `MAX_SGL_LEN` [num of pages]  
+
+Uncomment macro below /\*EC setup\*/  
+  * `NDATAS` [num of splits]    
+  * `NDISKS` [num of splits+parity]    
+    It define the easure coding parameters.  
+ * `DATASIZE_G` [num of splits+parity]    
+    It defines the size of a block device.  
+  
+```c
+#define NDATAS 8 //number of splits 
+#define NDISKS (NDATAS + 2) //number of splits+parity
+#define DATASIZE_G 8 //size of each block device in GB
+```  
+  * `MAX_SGL_LEN` [num of pages]    
     It specifies how many pages can be included in a single swap-out request (IO request).  
-  * `BIO_PAGE_CAP` [num of pages]  
+  * `BIO_PAGE_CAP` [num of pages]    
     It limits the maximum value of MAX_SGL_LEN.  
   * `MAX_MR_SIZE_GB` [size]  
     It sets the maximum number of slabs from a single Infiniswap daemon. Each slab is 1GB.
 ```c
-// example, in "infiniswap.h" 
-#define BACKUP_DISK "/dev/sda4"  
-#define STACKBD_SZIE_G 12  // 12GB
-#define MAX_SGL_LEN 32  // 32 x 4KB = 128KB, it's the max size for a single "struct bio" object.
+#define MAX_SGL_LEN 1 
 #define BIO_PAGE_CAP 32
 #define MAX_MR_SIZE_GB 32 //this infiniswap block device can get 32 slabs from each infiniswap daemon.
 ```
