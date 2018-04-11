@@ -42,7 +42,7 @@ Uncomment macro below /\*EC setup\*/
   * `NDATAS` [num of splits]    
   * `NDISKS` [num of splits+parity]    
     It define the easure coding parameters.  
- * `DATASIZE_G` [num of splits+parity]    
+ * `DATASIZE_G` [size in GB]    
     It defines the size of a block device.  
   
 ```c
