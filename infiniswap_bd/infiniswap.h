@@ -39,9 +39,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef INFINISWAP_H
-#define INFINISWAP_H
-
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/kthread.h>
@@ -81,87 +78,9 @@
 
 #include <rdma/ib_verbs.h>
 #include <rdma/rdma_cm.h>
+#include <linux/log2.h>
 
-//for stackbd
-#include <linux/errno.h>  /* error codes */
-#include <linux/types.h>  /* size_t */
-#include <linux/vmalloc.h>
-#include <linux/genhd.h>
-#include <linux/hdreg.h>
-#include <trace/events/block.h>
-
-// from NBDX
-#define SUBMIT_BLOCK_SIZE				\
-	+ sizeof(uint32_t) /* raio_filedes */		\
-	+ sizeof(uint32_t) /* raio_lio_opcode */	\
-	+ sizeof(uint64_t) /* nbytes */			\
-	+ sizeof(uint64_t) /* offset */
-
-#define STAT_BLOCK_SIZE					\
-	+ sizeof(uint64_t) /* dev */			\
-	+ sizeof(uint64_t) /* ino */			\
-	+ sizeof(uint32_t) /* mode */			\
-	+ sizeof(uint32_t) /* nlink */                  \
-	+ sizeof(uint64_t) /* uid */			\
-	+ sizeof(uint64_t) /* gid */			\
-	+ sizeof(uint64_t) /* rdev */			\
-	+ sizeof(uint64_t) /* size */                   \
-	+ sizeof(uint32_t) /* blksize */                \
-	+ sizeof(uint32_t) /* blocks */                 \
-	+ sizeof(uint64_t) /* atime */                  \
-	+ sizeof(uint64_t) /* mtime */                  \
-	+ sizeof(uint64_t) /* ctime */
-struct raio_answer {
-	uint32_t command;
-	uint32_t data_len;
-	int32_t ret;
-	int32_t ret_errno;
-};
-struct raio_command {
-	uint32_t command;
-	uint32_t data_len;
-};
-struct raio_iocb_common {
-	void			*buf;
-	unsigned long long	nbytes;
-	long long		offset;
-	unsigned int		flags;
-	unsigned int		resfd;
-};	
-struct raio_iocb {
-	void			*data;  /* Return in the io completion event */
-	unsigned int		key;	/* For use in identifying io requests */
-	int			raio_fildes;
-	int			raio_lio_opcode;
-	int			pad;
-	union {
-		struct raio_iocb_common	c;
-	} u;
-};
-
-#define LAST_IN_BATCH sizeof(uint32_t)
-
-#define SUBMIT_HEADER_SIZE (SUBMIT_BLOCK_SIZE +	    \
-			    LAST_IN_BATCH +	    \
-			    sizeof(struct raio_command))
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
-#define MAX_SGL_LEN 1	/* kernel 4.x only supports single page request*/
-#else
 #define MAX_SGL_LEN 32	/* max pages in a single struct request (swap IO request) */
-#endif
-struct raio_io_u {
-	struct scatterlist  sgl[MAX_SGL_LEN];
-	struct raio_iocb		iocb;
-	struct request		       *breq;
-	//struct xio_msg			req;
-	//struct xio_msg		       *rsp;
-	int				res;
-	int				res2;
-	struct raio_answer		ans;
-	struct list_head		list;
-
-	char				req_hdr[SUBMIT_HEADER_SIZE];
-};
 
 // from kernel 
 /*  host to network long long
@@ -175,9 +94,8 @@ struct raio_io_u {
 #define htonll2(x) cpu_to_be64((x))
 #define ntohll2(x) cpu_to_be64((x))
 
-
 #define MAX_MSG_LEN	    512
-#define MAX_PORTAL_NAME	  1024
+#define MAX_PORTAL_NAME	  512
 #define MAX_IS_DEV_NAME   256
 #define SUPPORTED_DISKS	    256
 #define SUPPORTED_PORTALS   5
@@ -186,47 +104,33 @@ struct raio_io_u {
 #define IS_QUEUE_DEPTH    256
 #define QUEUE_NUM_MASK	0x001f	//used in addr->(mapping)-> rdma_queue in IS_main.c
 
-//backup disk / swap space  size (GB)
-#define STACKBD_SIZE_G	12
-#define BACKUP_DISK	"/dev/sda4"
-//how may pages can be added into a single bio (128KB = 32 x 4KB)
-#define BIO_PAGE_CAP	32
-
-#define STACKBD_REDIRECT_OFF 0
-#define STACKBD_REDIRECT_ON  1
-#define STACKBD_BDEV_MODE (FMODE_READ | FMODE_WRITE | FMODE_EXCL)
-#define KERNEL_SECTOR_SIZE 512
-#define STACKBD_DO_IT _IOW( 0xad, 0, char * )
-#define STACKBD_NAME "stackbd"
-#define STACKBD_NAME_0 STACKBD_NAME "0"
-
-static struct stackbd_t {
-    sector_t capacity; 
-    struct gendisk *gd;
-    spinlock_t lock;
-    struct bio_list bio_list;
-    struct task_struct *thread;
-    int is_active;
-    struct block_device *bdev_raw;
-    struct request_queue *queue;
-    atomic_t redirect_done;
-} stackbd;
-
-static int major_num = 0;
-module_param(major_num, int, 0);
-static int LOGICAL_BLOCK_SIZE = 512;
-module_param(LOGICAL_BLOCK_SIZE, int, 0);
-
-static DECLARE_WAIT_QUEUE_HEAD(req_event);
-
 //bitmap
-#define INT_BITS 32
 #define BITMAP_SHIFT 5 // 2^5=32
 #define ONE_GB_SHIFT 30
 #define BITMAP_MASK 0x1f // 2^5=32
 #define ONE_GB_MASK 0x3fffffff
-#define ONE_GB 1073741824 //1024*1024*1024 
+#define ONE_GB 0x40000000 //1024*1024*1024 
+#define ONE_MB 0x100000 //1024*1024*1024 
 #define BITMAP_INT_SIZE 8192 //bitmap[], 1GB/4k/32
+
+/*Replication setup*/
+/*#define REP 
+#define NDATAS 1
+#define NDISKS 3
+#define DATASIZE_G 4
+#define DISKSIZE_G ((DATASIZE_G/NDATAS)*NDISKS)
+#define SLAB_SHIFT ONE_GB_SHIFT
+#define SLAB_MASK ONE_GB_MASK*/
+
+/*EC setup*/
+#define EC 
+#define NDATAS 4
+#define NDISKS (NDATAS + 2)
+#define DATASIZE_G 4
+#define DISKSIZE_G ((DATASIZE_G/NDATAS)*NDISKS)
+#define SLAB_SHIFT 22 //33 MB_SLAB
+#define SLAB_MASK 0x3fffff//0x1ffffffff //((2^SLAB_SHIFT) - 1) //ONE_GB_MASK*/ 
+#define SLAB_SIZE ONE_MB
 
 enum mem_type {
 	DMA = 1,
@@ -285,7 +189,6 @@ struct remote_chunk_g {
 	uint32_t remote_rkey;		/* remote guys RKEY */
 	uint64_t remote_addr;		/* remote guys TO */
 	//uint64_t remote_len;		/* remote guys LEN */
-	int *bitmap_g;	//1GB bitmap
 };
 
 #define CHUNK_MAPPED 1
@@ -351,11 +254,10 @@ struct kernel_cb {
 	u64 send_dma_addr;
 	DECLARE_PCI_UNMAP_ADDR(send_mapping)
 	struct ib_mr *send_mr;
-
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
 	struct ib_rdma_wr rdma_sq_wr;	/* rdma work request record */
 #else
-	struct ib_send_wr rdma_sq_wr;	/* rdma work request record */
+	struct ib_send_wr rdma_sq_wr;
 #endif
 	struct ib_sge rdma_sgl;		/* rdma single SGE */
 	char *rdma_buf;			/* used as rdma sink */
@@ -414,7 +316,7 @@ struct rdma_ctx {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
 	struct ib_rdma_wr rdma_sq_wr;	/* rdma work request record */
 #else
-	struct ib_send_wr rdma_sq_wr;	/* rdma work request record */
+	struct ib_send_wr rdma_sq_wr;
 #endif
 	struct ib_sge rdma_sgl;		/* rdma single SGE */
 	char *rdma_buf;			/* used as rdma sink */
@@ -427,7 +329,11 @@ struct rdma_ctx {
 	unsigned long offset;
 	unsigned long len;
 	struct remote_chunk_g *chunk_ptr;
-	atomic_t in_flight; //true = 1, false = 0
+	atomic_t in_flight; //true = 1, false = 0 
+	/*ctx synchronization*/
+	struct rdma_ctx* ctxs[NDISKS];
+	int index;
+	atomic_t* cnt;
 };
 
 struct free_ctx_pool {
@@ -480,7 +386,7 @@ enum cb_state {
 #define DEV_RDMA_OFF	0
 
 //  server selection, call m server each time.
-#define SERVER_SELECT_NUM 1
+#define SERVER_SELECT_NUM NDISKS+3
 
 struct IS_session {
 	// Nov19 request distribution
@@ -516,18 +422,15 @@ struct IS_session {
 	int *chunk_map_cb_chunk; //sess->chunk map to cb-chunk
 	int *unmapped_chunk_list;
 	int free_chunk_index; //active header of unmapped_chunk_list
-	atomic_t	rdma_on;	//DEV_RDMA_ON/OFF
 
 	struct task_struct     *rdma_trigger_thread; //based on swap rate
-	unsigned long write_ops[STACKBD_SIZE_G];
-	unsigned long read_ops[STACKBD_SIZE_G];	
-	unsigned long last_ops[STACKBD_SIZE_G];
 	unsigned long trigger_threshold;
-	spinlock_t write_ops_lock[STACKBD_SIZE_G];
-	spinlock_t read_ops_lock[STACKBD_SIZE_G];
-	int w_weight;
-	int cur_weight;
-	atomic_t trigger_enable;
+};
+
+struct thread_data{
+ 	struct request *req;
+	struct IS_queue *q;
+	int tid;
 };
 #define TRIGGER_ON 1
 #define TRIGGER_OFF 0
@@ -585,10 +488,12 @@ extern int submit_queues;
 extern int IS_major;
 extern int IS_indexes;
 
+
+int IS_request(struct request *req, struct IS_queue *xq);
 int IS_single_chunk_map(struct IS_session *IS_session, int i);
-int IS_transfer_chunk(struct IS_file *xdev, struct kernel_cb *cb, int cb_index, int chunk_index, struct remote_chunk_g *chunk, unsigned long offset,
-		  unsigned long len, int write, struct request *req,
-		  struct IS_queue *q);
+int IS_transfer_chunk(struct IS_file *xdev, struct kernel_cb **cb, int *cb_index, int *chunk_index, 
+		      struct remote_chunk_g **chunk, unsigned long offset, unsigned long len, int write,
+		      struct request *req,  struct IS_queue *q);
 int IS_session_create(const char *portal, struct IS_session *IS_session);
 void IS_session_destroy(struct IS_session *IS_session);
 int IS_create_device(struct IS_session *IS_session,
@@ -600,21 +505,8 @@ void IS_unregister_block_device(struct IS_file *IS_file);
 int IS_setup_queues(struct IS_file *xdev);
 void IS_destroy_queues(struct IS_file *xdev);
 
-void stackbd_make_request(struct request_queue *q, struct bio *bio);
-void stackbd_make_request2(struct request_queue *q, struct request *req);
-void stackbd_make_request3(struct request_queue *q, struct request *req);
-void stackbd_make_request4(struct request_queue *q, struct request *req);
-void stackbd_make_request5(struct bio *b);
-void IS_mq_request_stackbd(struct request *req);
-void IS_mq_request_stackbd2(struct request *req);
 void IS_single_chunk_init(struct kernel_cb *cb);
 void IS_chunk_list_init(struct kernel_cb *cb);
-void IS_bitmap_set(int *bitmap, int i);
-bool IS_bitmap_test(int *bitmap, int i);
-void IS_bitmap_clear(int *bitmap, int i);
-void IS_bitmap_init(int *bitmap);
-void IS_bitmap_group_set(int *bitmap, unsigned long offset, unsigned long len);
-void IS_bitmap_group_clear(int *bitmap, unsigned long offset, unsigned long len);
 void IS_insert_ctx(struct rdma_ctx *ctx);
 
 //configfs
@@ -626,6 +518,4 @@ struct IS_session *IS_session_find_by_portal(struct list_head *s_data_list,
 						 const char *portal);
 const char* IS_device_state_str(struct IS_file *dev);
 int IS_set_device_state(struct IS_file *dev, enum IS_dev_state state);
-
-#endif  /* INFINISWAP_H */
 

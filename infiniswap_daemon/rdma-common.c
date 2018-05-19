@@ -211,7 +211,7 @@ void rdma_session_init(struct rdma_session *sess){
   int free_mem_g;
   int i;
 
-  free_mem_g = (int)(get_free_mem() / ONE_MB);
+  free_mem_g = (int)(get_free_mem() / SLAB_SIZE);
   printf("%s, get free_mem %d\n", __func__, free_mem_g);
   for (i=0; i<MAX_FREE_MEM_GB; i++) {
     sess->rdma_remote.conn_map[i] = -1;
@@ -231,8 +231,8 @@ void rdma_session_init(struct rdma_session *sess){
   }
 
   for (i=0; i < free_mem_g; i++){
-    posix_memalign((void **)&(sess->rdma_remote.region_list[i]), page_size, ONE_GB);
-    memset(sess->rdma_remote.region_list[i], 0x00, ONE_GB);
+    posix_memalign((void **)&(sess->rdma_remote.region_list[i]), page_size, SLAB_SIZE);
+    memset(sess->rdma_remote.region_list[i], 0x00, SLAB_SIZE);
     sess->rdma_remote.malloc_map[i] = CHUNK_MALLOCED;
   }
   sess->rdma_remote.size_gb = free_mem_g;
@@ -421,11 +421,11 @@ void* free_mem(void *data)
   int i, j;
 
   rdma_session_init(&session);
-  last_free_mem_g = (int)(get_free_mem() / ONE_MB);
+  last_free_mem_g = (int)(get_free_mem() / SLAB_SIZE);
   printf("%s, is called, last %d GB, weight: %f, %f\n", __func__, last_free_mem_g, CURR_FREE_MEM_WEIGHT, last_free_mem_weight); 
 
   while (running) {// server is working
-    free_mem_g = (int)(get_free_mem() / ONE_MB);
+    free_mem_g = (int)(get_free_mem() / SLAB_SIZE);
     //need a filter
     filtered_free_mem_g = (int)(CURR_FREE_MEM_WEIGHT * free_mem_g + last_free_mem_g * last_free_mem_weight); 
     last_free_mem_g = filtered_free_mem_g;
@@ -457,8 +457,8 @@ void* free_mem(void *data)
         j = 0;
         for (i = 0; i < MAX_FREE_MEM_GB; i++){
           if (session.rdma_remote.malloc_map[i] == CHUNK_EMPTY){
-            posix_memalign((void **)&(session.rdma_remote.region_list[i]), page_size, ONE_GB);
-            memset(session.rdma_remote.region_list[i], 0x00, ONE_GB);
+            posix_memalign((void **)&(session.rdma_remote.region_list[i]), page_size, SLAB_SIZE);
+            memset(session.rdma_remote.region_list[i], 0x00, SLAB_SIZE);
             session.rdma_remote.malloc_map[i] = CHUNK_MALLOCED;
             j += 1;
             if (j == expand_size_g){
@@ -648,21 +648,24 @@ void send_message(struct connection *conn)
 void send_single_mr(void *context, int client_chunk_index)
 {
   struct connection *conn = (struct connection *)context;
-  int i = 0;
+  int i;
 
   conn->send_msg->size_gb = client_chunk_index;
-  for (i=0; i<MAX_FREE_MEM_GB;i++){
-    conn->send_msg->rkey[i] = 0;
-  }
-  for (i=0; i<MAX_FREE_MEM_GB; i++) {
-    if (session.rdma_remote.malloc_map[i] == CHUNK_MALLOCED && session.rdma_remote.conn_map[i] == -1) {// allocated && unmapped 
+
+  for (i=0; MAX_FREE_MEM_GB; i++) { //FIXME: for now single slab
+    if (session.rdma_remote.malloc_map[i] == CHUNK_MALLOCED ){ // && session.rdma_remote.conn_map[i] == -1) {// allocated && unmapped
+      if( session.rdma_remote.conn_map[i] == -1 ){
+	TEST_Z(session.rdma_remote.mr_list[i] = ibv_reg_mr(s_ctx->pd, session.rdma_remote.region_list[i], SLAB_SIZE, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ)); //Write permission can't cover read permission, different traditional understanding
+	}
       conn->sess_chunk_map[i] = i;
       session.rdma_remote.conn_map[i] = conn->conn_index;
-      TEST_Z(session.rdma_remote.mr_list[i] = ibv_reg_mr(s_ctx->pd, session.rdma_remote.region_list[i], ONE_GB, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ)); //Write permission can't cover read permission, different traditional understanding
       conn->send_msg->buf[i] = htonll((uint64_t)session.rdma_remote.mr_list[i]->addr);
       conn->send_msg->rkey[i] = htonl((uint64_t)session.rdma_remote.mr_list[i]->rkey);
       printf("RDMA addr %llx  rkey %x\n", (unsigned long long)conn->send_msg->buf[i], conn->send_msg->rkey[i]);
       break;
+    }
+    else {
+    conn->send_msg->rkey[i] = 0;
     }
   } 
   session.rdma_remote.mapped_size += 1;
@@ -685,7 +688,7 @@ void send_mr(void *context, int size)
     if (session.rdma_remote.malloc_map[i] == CHUNK_MALLOCED && session.rdma_remote.conn_map[i] == -1) {// allocated && unmapped 
       conn->sess_chunk_map[i] = i;
       session.rdma_remote.conn_map[i] = conn->conn_index;
-      TEST_Z(session.rdma_remote.mr_list[i] = ibv_reg_mr(s_ctx->pd, session.rdma_remote.region_list[i], ONE_GB, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ)); //Write permission can't cover read permission, different traditional understanding
+      TEST_Z(session.rdma_remote.mr_list[i] = ibv_reg_mr(s_ctx->pd, session.rdma_remote.region_list[i], SLAB_SIZE, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ)); //Write permission can't cover read permission, different traditional understanding
       conn->send_msg->buf[i] = htonll((uint64_t)session.rdma_remote.mr_list[i]->addr);
       conn->send_msg->rkey[i] = htonl((uint64_t)session.rdma_remote.mr_list[i]->rkey);
       printf("RDMA addr %llx  rkey %x\n", (unsigned long long)conn->send_msg->buf[i], conn->send_msg->rkey[i]);

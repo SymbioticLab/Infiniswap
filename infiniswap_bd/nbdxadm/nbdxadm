@@ -123,11 +123,11 @@ def createHost(parser, opts):
         print 'host id %d is already configured' % opts.host_id
         return 1
 
-    for section in parser.sections():
-        if parser.has_option(section, 'portal'):
-            if opts.portal == parser.get(section, 'portal'):
-                print 'Portal %s already exists' % opts.portal
-                return 1
+    #for section in parser.sections():
+        #if parser.has_option(section, 'portal'):
+            #if opts.portal == parser.get(section, 'portal'):
+            #    print 'Portal %s already exists' % opts.portal
+            #    return 1
 
     host_path = os.path.join(NBDX_CONFIGFS, nbdxhost)
     os.makedirs(host_path)

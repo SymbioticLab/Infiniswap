@@ -1,16 +1,20 @@
 SHELL = /bin/sh
 INSTALL = /usr/bin/install -c
 mkdir_p = mkdir -p
-build_dir = /lib/modules/$(shell uname -r)
+VERSION = 0.0
 VERSION = @PACKAGE_VERSION@
 OFED_CFLAGS = @OFED_CFLAGS@
 KSYMVERS = @RDMA_SYMVERS@
+
 NOSTDINC_FLAGS += @OFED_CFLAGS@
+
+build_dir = /lib/modules/$(shell uname -r)
 
 ismoduledir = /lib/modules/$(shell uname -r)/extra/infiniswap
 ismodule := infiniswap.ko
-issrc := ./
-nbdxadm := nbdxadm
+issrc := ${PWD}
+ecsrc := ${issrc}/erasure_code
+nbdxadm := ${issrc}/nbdxadm
 
 all: all-spec
 
@@ -33,7 +37,24 @@ obj-m := infiniswap.o
 infiniswap-objs := 	\
 	is_configfs.o	\
 	is_mq.o	\
-	is_main.o
+	is_main.o \
+	erasure_code/ec_base.o \
+	erasure_code/ec_highlevel_func.o \
+	erasure_code/gf_vect_dot_prod_avx.o  \
+	erasure_code/gf_2vect_dot_prod_avx.o  \
+	erasure_code/gf_3vect_dot_prod_avx.o  \
+	erasure_code/gf_4vect_dot_prod_avx.o  
+
+$(ecsrc)/gf_vect_dot_prod_avx.o:  erasure_code/gf_vect_dot_prod_avx.asm  
+	nasm -f elf64 -o $@ $^ -i $(ecsrc)/
+$(ecsrc)/gf_2vect_dot_prod_avx.o:  erasure_code/gf_2vect_dot_prod_avx.asm  
+	nasm -f elf64 -o $@ $^ -i $(ecsrc)/
+$(ecsrc)/gf_3vect_dot_prod_avx.o:  erasure_code/gf_3vect_dot_prod_avx.asm  
+	nasm -f elf64 -o $@ $^ -i $(ecsrc)/
+$(ecsrc)/gf_4vect_dot_prod_avx.o:  erasure_code/gf_4vect_dot_prod_avx.asm  
+	nasm -f elf64 -o $@ $^ -i $(ecsrc)/
+
 
 all-spec:
-	$(MAKE) -C $(build_dir)/build SUBDIRS=`pwd` KBUILD_EXTRA_SYMBOLS="$(KSYMVERS)" @KERNELMAKE_PARAMS@ modules
+	export NOSTDINC_FLAGS
+	$(MAKE) -C $(build_dir)/build SUBDIRS=`pwd` KBUILD_EXTRA_SYMBOLS="$(KSYMVERS)" modules
