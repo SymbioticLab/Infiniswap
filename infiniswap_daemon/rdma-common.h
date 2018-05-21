@@ -31,12 +31,9 @@
 #define MAX_FREE_MEM_GB 32 //for local memory management
 #define MAX_MR_SIZE_GB 32 //for msg passing
 
-#define ONE_GB 0x40000000 //1024*1024*1024
-#define ONE_MB 0x100000 //1024*1024*1024
-#define SLAB_SIZE ONE_MB
-
-
-#define FREE_MEM_EVICT_THRESHOLD 1 //in GB
+#define ONE_MB 1048576
+#define ONE_GB 1073741824
+#define FREE_MEM_EVICT_THRESHOLD 10 //in GB
 #define FREE_MEM_EXPAND_THRESHOLD 20 // in GB
 #define CURR_FREE_MEM_WEIGHT 0.7
 #define MEM_EVICT_HIT_THRESHOLD 1

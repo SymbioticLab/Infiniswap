@@ -80,7 +80,76 @@
 #include <rdma/rdma_cm.h>
 #include <linux/log2.h>
 
-#define MAX_SGL_LEN 32	/* max pages in a single struct request (swap IO request) */
+// from NBDX
+#define SUBMIT_BLOCK_SIZE				\
+	+ sizeof(uint32_t) /* raio_filedes */		\
+	+ sizeof(uint32_t) /* raio_lio_opcode */	\
+	+ sizeof(uint64_t) /* nbytes */			\
+	+ sizeof(uint64_t) /* offset */
+
+#define STAT_BLOCK_SIZE					\
+	+ sizeof(uint64_t) /* dev */			\
+	+ sizeof(uint64_t) /* ino */			\
+	+ sizeof(uint32_t) /* mode */			\
+	+ sizeof(uint32_t) /* nlink */                  \
+	+ sizeof(uint64_t) /* uid */			\
+	+ sizeof(uint64_t) /* gid */			\
+	+ sizeof(uint64_t) /* rdev */			\
+	+ sizeof(uint64_t) /* size */                   \
+	+ sizeof(uint32_t) /* blksize */                \
+	+ sizeof(uint32_t) /* blocks */                 \
+	+ sizeof(uint64_t) /* atime */                  \
+	+ sizeof(uint64_t) /* mtime */                  \
+	+ sizeof(uint64_t) /* ctime */
+struct raio_answer {
+	uint32_t command;
+	uint32_t data_len;
+	int32_t ret;
+	int32_t ret_errno;
+};
+struct raio_command {
+	uint32_t command;
+	uint32_t data_len;
+};
+struct raio_iocb_common {
+	void			*buf;
+	unsigned long long	nbytes;
+	long long		offset;
+	unsigned int		flags;
+	unsigned int		resfd;
+};	
+struct raio_iocb {
+	void			*data;  /* Return in the io completion event */
+	unsigned int		key;	/* For use in identifying io requests */
+	int			raio_fildes;
+	int			raio_lio_opcode;
+	int			pad;
+	union {
+		struct raio_iocb_common	c;
+	} u;
+};
+
+#define LAST_IN_BATCH sizeof(uint32_t)
+
+#define SUBMIT_HEADER_SIZE (SUBMIT_BLOCK_SIZE +	    \
+			    LAST_IN_BATCH +	    \
+			    sizeof(struct raio_command))
+
+#define MAX_SGL_LEN 1	/* max pages in a single struct request (swap IO request) */
+
+struct raio_io_u {
+	struct scatterlist  sgl[MAX_SGL_LEN];
+	struct raio_iocb		iocb;
+	struct request		       *breq;
+	//struct xio_msg			req;
+	//struct xio_msg		       *rsp;
+	int				res;
+	int				res2;
+	struct raio_answer		ans;
+	struct list_head		list;
+
+	char				req_hdr[SUBMIT_HEADER_SIZE];
+};
 
 // from kernel 
 /*  host to network long long
@@ -95,7 +164,7 @@
 #define ntohll2(x) cpu_to_be64((x))
 
 #define MAX_MSG_LEN	    512
-#define MAX_PORTAL_NAME	  512
+#define MAX_PORTAL_NAME	  1024
 #define MAX_IS_DEV_NAME   256
 #define SUPPORTED_DISKS	    256
 #define SUPPORTED_PORTALS   5
@@ -105,12 +174,12 @@
 #define QUEUE_NUM_MASK	0x001f	//used in addr->(mapping)-> rdma_queue in IS_main.c
 
 //bitmap
+#define INT_BITS 32
 #define BITMAP_SHIFT 5 // 2^5=32
 #define ONE_GB_SHIFT 30
 #define BITMAP_MASK 0x1f // 2^5=32
 #define ONE_GB_MASK 0x3fffffff
-#define ONE_GB 0x40000000 //1024*1024*1024 
-#define ONE_MB 0x100000 //1024*1024*1024 
+#define ONE_GB 1073741824 //1024*1024*1024 
 #define BITMAP_INT_SIZE 8192 //bitmap[], 1GB/4k/32
 
 /*Replication setup*/
@@ -122,15 +191,24 @@
 #define SLAB_SHIFT ONE_GB_SHIFT
 #define SLAB_MASK ONE_GB_MASK*/
 
-/*EC setup*/
-#define EC 
+/*PQ setup*/
+/*#define PQ 
 #define NDATAS 4
 #define NDISKS (NDATAS + 2)
-#define DATASIZE_G 4
+#define DATASIZE_G 8
 #define DISKSIZE_G ((DATASIZE_G/NDATAS)*NDISKS)
-#define SLAB_SHIFT 22 //33 MB_SLAB
-#define SLAB_MASK 0x3fffff//0x1ffffffff //((2^SLAB_SHIFT) - 1) //ONE_GB_MASK*/ 
-#define SLAB_SIZE ONE_MB
+#define SLAB_SHIFT 32
+#define SLAB_MASK 0xffffffff //((2^SLAB_SHIFT) - 1) //ONE_GB_MASK*/ 
+
+
+/*Erasure setup*/
+#define EC 
+#define NDATAS 1
+#define NDISKS (NDATAS + 1)
+#define DATASIZE_G 8
+#define DISKSIZE_G ((DATASIZE_G/NDATAS)*NDISKS)
+#define SLAB_SHIFT ONE_GB_SHIFT
+#define SLAB_MASK ONE_GB_MASK //0x1ffffffff //((2^SLAB_SHIFT) - 1) //ONE_GB_MASK*/ 
 
 enum mem_type {
 	DMA = 1,
@@ -189,6 +267,7 @@ struct remote_chunk_g {
 	uint32_t remote_rkey;		/* remote guys RKEY */
 	uint64_t remote_addr;		/* remote guys TO */
 	//uint64_t remote_len;		/* remote guys LEN */
+	int *bitmap_g;	//1GB bitmap
 };
 
 #define CHUNK_MAPPED 1
@@ -254,11 +333,8 @@ struct kernel_cb {
 	u64 send_dma_addr;
 	DECLARE_PCI_UNMAP_ADDR(send_mapping)
 	struct ib_mr *send_mr;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+
 	struct ib_rdma_wr rdma_sq_wr;	/* rdma work request record */
-#else
-	struct ib_send_wr rdma_sq_wr;
-#endif
 	struct ib_sge rdma_sgl;		/* rdma single SGE */
 	char *rdma_buf;			/* used as rdma sink */
 	u64  rdma_dma_addr;
@@ -313,11 +389,7 @@ struct rdma_ctx {
 	struct IS_connection *IS_conn;
 	struct free_ctx_pool *free_ctxs;  //or this one
 	//struct mutex ctx_lock;	
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
 	struct ib_rdma_wr rdma_sq_wr;	/* rdma work request record */
-#else
-	struct ib_send_wr rdma_sq_wr;
-#endif
 	struct ib_sge rdma_sgl;		/* rdma single SGE */
 	char *rdma_buf;			/* used as rdma sink */
 	u64  rdma_dma_addr;
@@ -334,6 +406,8 @@ struct rdma_ctx {
 	struct rdma_ctx* ctxs[NDISKS];
 	int index;
 	atomic_t* cnt;
+	bool* completion;
+	char *buffer;
 };
 
 struct free_ctx_pool {
@@ -386,7 +460,7 @@ enum cb_state {
 #define DEV_RDMA_OFF	0
 
 //  server selection, call m server each time.
-#define SERVER_SELECT_NUM NDISKS+3
+#define SERVER_SELECT_NUM NDISKS+1
 
 struct IS_session {
 	// Nov19 request distribution
@@ -507,6 +581,12 @@ void IS_destroy_queues(struct IS_file *xdev);
 
 void IS_single_chunk_init(struct kernel_cb *cb);
 void IS_chunk_list_init(struct kernel_cb *cb);
+void IS_bitmap_set(int *bitmap, int i);
+bool IS_bitmap_test(int *bitmap, int i);
+void IS_bitmap_clear(int *bitmap, int i);
+void IS_bitmap_init(int *bitmap);
+void IS_bitmap_group_set(int *bitmap, unsigned long offset, unsigned long len);
+void IS_bitmap_group_clear(int *bitmap, unsigned long offset, unsigned long len);
 void IS_insert_ctx(struct rdma_ctx *ctx);
 
 //configfs

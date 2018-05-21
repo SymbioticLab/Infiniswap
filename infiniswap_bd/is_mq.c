@@ -195,11 +195,7 @@ static int IS_init_hctx(struct blk_mq_hw_ctx *hctx, void *data,
 
 static struct blk_mq_ops IS_mq_ops = {
 	.queue_rq       = IS_queue_rq,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
 	.map_queues      = blk_mq_map_queues,  
-#else
-	.map_queue      = blk_mq_map_queue,  
-#endif
 	.init_hctx	= IS_init_hctx,
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 16, 0)
 	.alloc_hctx	= IS_alloc_hctx,
@@ -210,6 +206,7 @@ static struct blk_mq_ops IS_mq_ops = {
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 16, 0)
 static struct blk_mq_reg IS_mq_reg = {
 	.ops		= &IS_mq_ops,
+	.cmd_size	= sizeof(struct raio_io_u),
 	.flags		= BLK_MQ_F_SHOULD_MERGE,
 	.numa_node	= NUMA_NO_NODE,
 	.queue_depth	= IS_QUEUE_DEPTH,
@@ -291,6 +288,7 @@ int IS_register_block_device(struct IS_file *IS_file)
 	IS_file->tag_set.nr_hw_queues = submit_queues;
 	IS_file->tag_set.queue_depth = IS_QUEUE_DEPTH;
 	IS_file->tag_set.numa_node = NUMA_NO_NODE;
+	IS_file->tag_set.cmd_size	= sizeof(struct raio_io_u); // this may need chagne
 	IS_file->tag_set.flags = BLK_MQ_F_SHOULD_MERGE;
 	IS_file->tag_set.driver_data = IS_file;
 
@@ -366,6 +364,8 @@ void IS_single_chunk_init(struct kernel_cb *cb)
 			pr_info("Received rkey %x addr %llx from peer\n", ntohl(cb->recv_buf.rkey[i]), (unsigned long long)ntohll(cb->recv_buf.buf[i]));	
 			cb->remote_chunk.chunk_list[i]->remote_rkey = ntohl(cb->recv_buf.rkey[i]);
 			cb->remote_chunk.chunk_list[i]->remote_addr = ntohll(cb->recv_buf.buf[i]);
+			cb->remote_chunk.chunk_list[i]->bitmap_g = (int *)kzalloc(sizeof(int) * BITMAP_INT_SIZE, GFP_KERNEL);
+			IS_bitmap_init(cb->remote_chunk.chunk_list[i]->bitmap_g);
 			IS_session->free_chunk_index -= 1;
 			IS_session->chunk_map_cb_chunk[select_chunk] = i;
 			cb->remote_chunk.chunk_map[i] = select_chunk;
@@ -392,6 +392,8 @@ void IS_chunk_list_init(struct kernel_cb *cb)
 			pr_info("Received rkey %x addr %llx from peer\n", ntohl(cb->recv_buf.rkey[i]), (unsigned long long)ntohll(cb->recv_buf.buf[i]));	
 			cb->remote_chunk.chunk_list[i]->remote_rkey = ntohl(cb->recv_buf.rkey[i]);
 			cb->remote_chunk.chunk_list[i]->remote_addr = ntohll(cb->recv_buf.buf[i]);
+			cb->remote_chunk.chunk_list[i]->bitmap_g = (int *)kzalloc(sizeof(int) * BITMAP_INT_SIZE, GFP_KERNEL);
+			IS_bitmap_init(cb->remote_chunk.chunk_list[i]->bitmap_g);
 			atomic_set(cb->remote_chunk.remote_mapped + i, CHUNK_MAPPED);
 			sess_free_chunk = IS_session->unmapped_chunk_list[IS_session->free_chunk_index];
 			IS_session->free_chunk_index -= 1;
@@ -406,4 +408,47 @@ void IS_chunk_list_init(struct kernel_cb *cb)
 	}
 	cb->remote_chunk.chunk_size_g += size_g;
 	cb->remote_chunk.c_state = C_READY;
+}
+
+
+void IS_bitmap_set(int *bitmap, int i)
+{
+	bitmap[i >> BITMAP_SHIFT] |= 1 << (i & BITMAP_MASK);
+}
+
+void IS_bitmap_group_set(int *bitmap, unsigned long offset, unsigned long len)
+{
+	int start_page = (int)(offset/IS_PAGE_SIZE);	
+	int len_page = (int)(len/IS_PAGE_SIZE);
+	int i;
+	for (i=0; i<len_page; i++){
+		IS_bitmap_set(bitmap, start_page + i);
+	}
+}
+void IS_bitmap_group_clear(int *bitmap, unsigned long offset, unsigned long len)
+{
+	int start_page = (int)(offset/IS_PAGE_SIZE);	
+	int len_page = (int)(len/IS_PAGE_SIZE);
+	int i;
+	for (i=0; i<len_page; i++){
+		IS_bitmap_clear(bitmap, start_page + i);
+	}
+}
+bool IS_bitmap_test(int *bitmap, int i)
+{
+	if ((bitmap[i >> BITMAP_SHIFT] & (1 << (i & BITMAP_MASK))) != 0){
+		return true;
+	}else{
+		return false;
+	}
+}
+
+
+void IS_bitmap_clear(int *bitmap, int i)
+{
+	bitmap[i >> BITMAP_SHIFT] &= ~(1 << (i & BITMAP_MASK));
+}
+void IS_bitmap_init(int *bitmap)
+{
+	memset(bitmap, 0x00, ONE_GB/(4096*8));
 }

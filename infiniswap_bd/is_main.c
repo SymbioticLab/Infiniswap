@@ -40,15 +40,14 @@
  */
 
 #include "infiniswap.h"
-#include <linux/bio.h>
 
-#ifdef EC
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0)
-#include <asm/fpu/api.h>
-#else
-#include <asm/i387.h>
+#ifdef PQ
+#include <linux/raid/pq.h>
+#include <linux/raid/xor.h>
 #endif
 
+#ifdef EC
+#include <asm/fpu/api.h>
 #include "erasure_code/erasure_code.h"
 
 unsigned char *encode_matrix, *decode_matrix, *invert_matrix, *encode_tbls, *decode_tbls;
@@ -145,15 +144,6 @@ struct mutex g_lock;
 int NUM_CB;	// num of server/cb
 
 
-
-void show_rdma_info(struct IS_rdma_info * info){
-
-	printk("type: %d\nindex: %d\n",
-		info->type, info->size_gb);
-
-}
-
-
 static void rdma_cq_event_handler(struct ib_cq * cq, struct kernel_cb *cb);
 
 
@@ -231,50 +221,62 @@ int IS_rdma_read(struct IS_connection *IS_conn, struct kernel_cb **cb, int *cb_i
 	struct rdma_ctx *ctx[NDISKS];
 	int i,j;
 
-//        printk("read [%x] len [%x]", offset, len );
 	
 	/*ctx synchronization*/	
+	bool* completion = kzalloc ( sizeof(bool)*NDISKS, GFP_KERNEL);
 	atomic_t* count = kzalloc(sizeof(atomic_t), GFP_KERNEL);
 	atomic_set(count, NDATAS);
 
 	
 	// get ctx_buf based on request address
 	for (i=0; i<NDISKS; i++){
- 	int conn_id = (uint64_t)( bio_data(req->bio)   ) & QUEUE_NUM_MASK;
+	int conn_id = (uint64_t)( bio_data(req->bio)   ) & QUEUE_NUM_MASK;
 
-	IS_conn = IS_conn->IS_sess->IS_conns[conn_id];
-
-	if (cb_index[i] == NO_CB_MAPPED){
-	ctx[i] = IS_get_ctx(IS_conn->ctx_pools[i]);
-	continue;
+	if( cb_index[i] == NO_CB_MAPPED ){
+        	ctx[i] = IS_get_ctx(IS_conn->ctx_pools[ i ]); //FIXME
+		BUG_ON(!ctx[i]); //ctx NULL
+		if (i < NDATAS )
+		ctx[i]->rdma_buf = bio_data(req->bio)+i*(IS_PAGE_SIZE/NDATAS);
+		else
+		ctx[i]->rdma_buf = ctx[i]->buffer;
+		continue;
 	}
 
-	do { ctx[i] = IS_get_ctx(IS_conn->ctx_pools[  cb_index[i] ]); }
-	while (!ctx[i]);
-
-
+	IS_conn = IS_conn->IS_sess->IS_conns[conn_id];
+	ctx[i] = IS_get_ctx(IS_conn->ctx_pools[  cb_index[i] ]);
 	BUG_ON(!ctx[i]); //ctx NULL
 
 	ctx[i]->req = req;
 	ctx[i]->cb = cb[i];
-	//ctx[i]->chunk_index = chunk_index[i]; //chunk_index in cb
+	ctx[i]->chunk_index = chunk_index[i]; //chunk_index in cb
 	atomic_set(&ctx[i]->in_flight, CTX_R_IN_FLIGHT);  
 	
+	#ifdef REP
+	ctx[i]->rdma_buf = bio_data(req->bio);
+	#else
+	if (i < NDATAS )
+	ctx[i]->rdma_buf = bio_data(req->bio)+i*(IS_PAGE_SIZE/NDATAS);
+	else
+	ctx[i]->rdma_buf = ctx[i]->buffer;
+	#endif
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+	ctx[i]->rdma_dma_addr = dma_map_single(&cb[i]->pd->device->dev, 
+					       ctx[i]->rdma_buf, cb[i]->size, 
+					       DMA_BIDIRECTIONAL);
+	pci_unmap_addr_set(ctx[i], rdma_mapping, ctx[i]->rdma_dma_addr);
+	ctx[i]->rdma_sgl.addr = ctx[i]->rdma_dma_addr;
+	ctx[i]->rdma_sgl.lkey = cb[i]->qp->device->local_dma_lkey;
+	ctx[i]->rdma_sq_wr.wr.send_flags = IB_SEND_SIGNALED;
+	ctx[i]->rdma_sq_wr.wr.sg_list = &ctx[i]->rdma_sgl;
+
 	ctx[i]->rdma_sq_wr.wr.sg_list->length = (len/NDATAS);
 	ctx[i]->rdma_sq_wr.rkey = chunk[i]->remote_rkey;
 	ctx[i]->rdma_sq_wr.remote_addr = chunk[i]->remote_addr + (offset/NDATAS);
 	ctx[i]->rdma_sq_wr.wr.opcode = IB_WR_RDMA_READ;
- #else
-	ctx[i]->rdma_sq_wr.sg_list->length = (len/NDATAS);
-	ctx[i]->rdma_sq_wr.wr.rdma.rkey = chunk[i]->remote_rkey;
-	ctx[i]->rdma_sq_wr.wr.rdma.remote_addr = chunk[i]->remote_addr + (offset/NDATAS);
-	ctx[i]->rdma_sq_wr.opcode = IB_WR_RDMA_READ;
- #endif
 
 	ctx[i]->index = i;
 	ctx[i]->cnt = count;
+	ctx[i]->completion = completion;
 	}
 
 
@@ -325,33 +327,36 @@ int IS_rdma_read(struct IS_connection *IS_conn, struct kernel_cb **cb, int *cb_i
 
 }
 
-
 int IS_rdma_write(struct IS_connection *IS_conn, struct kernel_cb **cb, int *cb_index, int *chunk_index, struct remote_chunk_g **chunk, unsigned long offset, unsigned long len, struct request *req, struct IS_queue *q)
 {
         int ret;
         struct ib_send_wr *bad_wr;
         struct rdma_ctx *ctx[NDISKS];
 	int i;
+	#ifdef PQ
 	unsigned char *ptrs[NDISKS];
-	struct bio *bio =  req->bio;
-
-//      printk("write [%x] len [%x]", offset, len  );
+	#endif
+	#ifdef EC
+	unsigned char *ptrs[NDISKS];
+	#endif
 
 	atomic_t* count = kzalloc(sizeof(atomic_t), GFP_KERNEL);
 	atomic_set(count, NDATAS);
 
-	for (i=0; i<NDISKS; i++){ // we need to get all the ctxs // write needs to be suspended until new chunk found
-        /* distribute based on request address for load balancing*/
- 	int conn_id = (uint64_t)( bio_data(req->bio)   ) & QUEUE_NUM_MASK;
-
+	for (i=0; i<NDISKS; i++){ // we need to get all the ctxs //write needs to be suspended until new chunk found
+        //get ctx_buf based on request address
+        int conn_id = (uint64_t)(bio_data(req->bio) ) & QUEUE_NUM_MASK;
         IS_conn = IS_conn->IS_sess->IS_conns[conn_id];
-
-	if (cb_index[i] == NO_CB_MAPPED){
-	ctx[i] = IS_get_ctx(IS_conn->ctx_pools[i]);
-	ptrs[i] = ctx[i]->rdma_buf;
-	continue;
-	}
-	
+	if( cb_index[i] == NO_CB_MAPPED ){
+        	ctx[i] = IS_get_ctx(IS_conn->ctx_pools[ i ]); //FIXME
+		BUG_ON(!ctx[i]);
+		if (i < NDATAS )
+		ctx[i]->rdma_buf = bio_data(req->bio)+i*(IS_PAGE_SIZE/NDATAS);
+		else
+		ctx[i]->rdma_buf = ctx[i]->buffer;
+		ptrs[i] = ctx[i]->rdma_buf;
+		continue;
+	}	
         ctx[i] = IS_get_ctx(IS_conn->ctx_pools[ cb_index[i] ]); 
 	BUG_ON(!ctx[i]);
 
@@ -362,81 +367,53 @@ int IS_rdma_write(struct IS_connection *IS_conn, struct kernel_cb **cb, int *cb_
         ctx[i]->chunk_ptr = chunk[i];
         ctx[i]->chunk_index = chunk_index[i];
 
-	ptrs[i] = ctx[i]->rdma_buf;
+	#ifdef REP
+	ctx[i]->rdma_buf = bio_data(req->bio);
+	#else
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+	if (i < NDATAS )
+	ctx[i]->rdma_buf = bio_data(req->bio)+i*(IS_PAGE_SIZE/NDATAS);
+	else
+	ctx[i]->rdma_buf = ctx[i]->buffer;
+
+	ptrs[i] = ctx[i]->rdma_buf;
+	#endif
+
+        atomic_set(&ctx[i]->in_flight, CTX_W_IN_FLIGHT);
+
+	ctx[i]->rdma_dma_addr = dma_map_single(&cb[i]->pd->device->dev, 
+					       ctx[i]->rdma_buf, cb[i]->size, 
+				      	       DMA_BIDIRECTIONAL);
+	pci_unmap_addr_set(ctx[i], rdma_mapping, ctx[i]->rdma_dma_addr);
+
+	ctx[i]->rdma_sgl.addr = ctx[i]->rdma_dma_addr;
+	ctx[i]->rdma_sgl.lkey = cb[i]->qp->device->local_dma_lkey;
+	ctx[i]->rdma_sq_wr.wr.send_flags = IB_SEND_SIGNALED;
+	ctx[i]->rdma_sq_wr.wr.sg_list = &ctx[i]->rdma_sgl;
+
         ctx[i]->rdma_sq_wr.wr.sg_list->length = (len/NDATAS);
         ctx[i]->rdma_sq_wr.rkey = chunk[i]->remote_rkey;
         ctx[i]->rdma_sq_wr.remote_addr = chunk[i]->remote_addr + (offset/NDATAS);
         ctx[i]->rdma_sq_wr.wr.opcode = IB_WR_RDMA_WRITE;
-#else
-        ctx[i]->rdma_sq_wr.sg_list->length = (len/NDATAS);
-        ctx[i]->rdma_sq_wr.wr.rdma.rkey = chunk[i]->remote_rkey;
-        ctx[i]->rdma_sq_wr.wr.rdma.remote_addr = chunk[i]->remote_addr + (offset/NDATAS);
-        ctx[i]->rdma_sq_wr.opcode = IB_WR_RDMA_WRITE;
 
-#endif
 	ctx[i]->index = i;
 	ctx[i]->cnt = count;
 	}
 
-#ifdef REP
-	for (bio_offset=0; bio; bio = bio->bi_next, bio_offset+=IS_PAGE_SIZE){
-	for (i=0; i< NDISKS; i++){
+	#ifdef EC	
 
-        memcpy(ctx[i]->rdma_buf + bio_offset,
-	       bio_data(bio),
-	       IS_PAGE_SIZE );
-	}
-	}
-#endif
-
-
-
-#ifdef EC
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)
-	if (bio_multiple_segments(bio)){
-        /*read can have segments */
-        struct bio_vec bvl;
-        struct bvec_iter iter;
-        u32  bio_offset= 0;
-
-        bio_for_each_segment(bvl, bio, iter){
-        BUG_ON(bvl.bv_len!= IS_PAGE_SIZE); //each bvec is page
-        for(i=0; i<NDATAS; i++){
-        memcpy( ctx[i]->rdma_buf + bio_offset/NDATAS,
-		page_address(bvl.bv_page) + i*IS_PAGE_SIZE/NDATAS,
-                IS_PAGE_SIZE/NDATAS);
-        }
-        bio_offset += IS_PAGE_SIZE;
-        }
-        }
-	else
-#endif
-	{
-	u32  bio_offset;	
-	for (bio_offset=0; bio; bio = bio->bi_next, bio_offset+=IS_PAGE_SIZE){
-//	BUG_ON(bio_multiple_segments(bio)); 
-	for (i=0; i<NDATAS; i++){
-
-	memcpy( ctx[i]->rdma_buf + bio_offset/NDATAS,
-	        bio_data(bio) + i*IS_PAGE_SIZE/NDATAS , 
-	        IS_PAGE_SIZE/NDATAS );
-
-	}
-	}
-	}
-
+	// Perform matrix dot_prod for EC encoding
+	// using g_tbls from encode matrix encode_matrix
 	kernel_fpu_begin();
 	ec_encode_data_avx(len/NDATAS, NDATAS, NDISKS-NDATAS, encode_tbls, ptrs, &ptrs[NDATAS]);
 	kernel_fpu_end();
-#endif
 
+	#endif
 
 	for (i=0; i<NDATAS; i++){
 	if(cb_index[i] == NO_CB_MAPPED)
 		continue;		
+	
 	//printk("client post write cb: %d offset:%lu len: %lu\n", cb_index[i], offset/NDATAS, len/NDATAS );
         ret = ib_post_send(cb[i]->qp, (struct ib_send_wr *) &ctx[i]->rdma_sq_wr, &bad_wr);
         if (ret) {
@@ -446,6 +423,12 @@ int IS_rdma_write(struct IS_connection *IS_conn, struct kernel_cb **cb, int *cb_
 	}
 
 
+	/* asynchronous erasure coding */
+	#ifdef PQ
+	raid6_call.gen_syndrome( NDISKS, len/NDATAS, (void**) ptrs );
+	#endif
+
+	
 
 	for (i=NDATAS; i<NDISKS; i++){
 	if(cb_index[i] == NO_CB_MAPPED)
@@ -470,6 +453,17 @@ int IS_rdma_write(struct IS_connection *IS_conn, struct kernel_cb **cb, int *cb_
         return 0;
 }
 
+uint32_t bitmap_value(int *bitmap)
+{
+	int i;
+	uint32_t val = 1;
+	for (i =0; i < BITMAP_INT_SIZE; i+=32) {
+		if (bitmap[i] != 0){
+			val += 1;	
+		}
+	}	
+	return val;
+}
 static int IS_send_activity(struct kernel_cb *cb)
 {
 	int ret = 0;
@@ -669,8 +663,6 @@ static int IS_disconnect_handler(struct kernel_cb *cb)
 		printk("Fail to gf_gen_decode_matrix\n");
 		return -1;
 	}
-
-	/* construct decoding table per disconnection*/
 	ec_init_tables(NDATAS, nerrs, decode_matrix, decode_tbls);
 
 
@@ -679,6 +671,7 @@ static int IS_disconnect_handler(struct kernel_cb *cb)
 		sess_chunk_index = cb_chunk_map[i];
 		if (sess_chunk_index != -1) { //this cb chunk is mapped
 			evict_list[sess_chunk_index] = 1;
+			IS_bitmap_init(cb->remote_chunk.chunk_list[i]->bitmap_g); //should be in in_flight_thread
 			atomic_set(cb->remote_chunk.remote_mapped + i, CHUNK_UNMAPPED);
 			atomic_set(IS_sess->cb_index_map + (sess_chunk_index), NO_CB_MAPPED); 
 			pr_debug("%s, unmap chunk %d\n", __func__, sess_chunk_index);
@@ -904,6 +897,7 @@ static int evict_handler(void *data)
 		IS_chunk_wait_in_flight_requests(cb);
 		for (i = 0; i < MAX_MR_SIZE_GB; i++) {
 			if (cb->remote_chunk.evict_chunk_map[i] == 's'){ // need to stop this chunk
+				IS_bitmap_init(cb->remote_chunk.chunk_list[i]->bitmap_g); 
 				atomic_set(cb->remote_chunk.remote_mapped + i, CHUNK_UNMAPPED);
 			}
 		}
@@ -971,37 +965,26 @@ static int client_recv(struct kernel_cb *cb, struct ib_wc *wc)
 		printk(KERN_ERR PFX "cb is not connected\n");	
 		return -1;
 	}
-
-	//DEBUG
-	//show_rdma_info(&cb->recv_buf);
-
-	
 	switch(cb->recv_buf.type){
-		
 		case FREE_SIZE:
-	//		printk("FREE_SIZE\n");	
 			cb->remote_chunk.target_size_g = cb->recv_buf.size_gb;
 			cb->state = FREE_MEM_RECV;	
 			break;
 		case INFO:
-	//		printk("INFO\n");	
 			cb->IS_sess->cb_state_list[cb->cb_index] = CB_MAPPED;
 			cb->state = WAIT_OPS;
 			IS_chunk_list_init(cb);
 			break;
 		case INFO_SINGLE:
-	//		printk("INFO_SINGLE\n");	
 			cb->IS_sess->cb_state_list[cb->cb_index] = CB_MAPPED;
 			cb->state = WAIT_OPS;
 			IS_single_chunk_init(cb);
 			break;
 		case EVICT:
-	//		printk("EVICT\n");	
 			cb->state = RECV_EVICT;
 			client_recv_evict(cb);
 			break;
 		case STOP:
-	//		printk("STOP\n");	
 			cb->state = RECV_STOP;	
 			client_recv_stop(cb);
 			break;
@@ -1017,63 +1000,148 @@ static int client_send(struct kernel_cb *cb, struct ib_wc *wc)
 	return 0;	
 }
 
+#ifdef PQ
+static void run_xor(void **pages, int src_cnt, ssize_t len)
+{
+        int src_off = 0;
+        int xor_src_cnt = 0;
+        void *dest = pages[src_cnt];
+
+        while(src_cnt > 0) {
+                xor_src_cnt = min(src_cnt, MAX_XOR_BLOCKS);
+                xor_blocks(xor_src_cnt, len, dest, pages + src_off);
+
+                src_cnt -= xor_src_cnt;
+                src_off += xor_src_cnt;
+        }
+}
+
+void read_data_precov(int disks, size_t bytes, int faila, void **ptrs)
+{
+	int nr_data = disks-2;
+	int stripe;
+	void *p;
+
+	memcpy(ptrs[faila], ptrs[nr_data], bytes);
+	
+	p = ptrs[faila];
+	for(stripe=faila; stripe < nr_data-1; stripe++ )
+		ptrs[stripe] = ptrs[stripe+1];
+	ptrs[nr_data-1] = p;
+
+	run_xor(ptrs, nr_data-1, bytes);
+}
+
+void read_2data_recov(int disks, size_t bytes, int faila, int failb,
+		       void **ptrs)
+{
+	u8 *p, *q, *dp, *dq;
+	u8 px, qx, db;
+	const u8 *pbmul;	/* P multiplier table for B data */
+	const u8 *qmul;		/* Q multiplier table (for both) */
+
+	p = (u8 *)ptrs[disks-2];
+	q = (u8 *)ptrs[disks-1];
+
+
+	/* Compute syndrome with zero for the missing data pages
+	   Use the dead data pages as temporary storage for
+	   delta p and delta q */
+	dp = (u8 *)ptrs[faila];
+	ptrs[faila] = (void *) empty_zero_page;
+	ptrs[disks-2] = dp;
+	dq = (u8 *)ptrs[failb];
+	ptrs[failb] = (void *) empty_zero_page;
+	ptrs[disks-1] = dq;
+
+	raid6_call.gen_syndrome(disks, bytes, ptrs);
+
+
+	/* Restore pointer table */
+	ptrs[faila]   = dp;
+	ptrs[failb]   = dq; //has issue
+	ptrs[disks-2] = p;
+	ptrs[disks-1] = q;
+
+	/* Now, pick the proper data tables */
+	pbmul = raid6_gfmul[raid6_gfexi[failb-faila]];
+	qmul  = raid6_gfmul[raid6_gfinv[raid6_gfexp[faila]^raid6_gfexp[failb]]];
+
+	/* Now do it... */
+	while ( bytes-- ) {
+		px    = *p ^ *dp;
+		qx    = qmul[*q ^ *dq];
+		*dq++ = db = pbmul[px] ^ qx; /* Reconstructed B */
+		*dp++ = db ^ px; /* Reconstructed A */
+		p++; q++;
+	}
+
+}
+
+static void read_data_qrecov(int disks, size_t bytes, int faila, void **ptrs)
+{
+        u8 *p, *q, *dq;
+        const u8 *qmul;         /* Q multiplier table */
+
+        p = (u8 *)ptrs[disks-2];
+        q = (u8 *)ptrs[disks-1];
+
+        /* Compute syndrome with zero for the missing data page
+           Use the dead data page as temporary storage for delta q */
+        dq = (u8 *)ptrs[faila];
+        ptrs[faila] = (void *) empty_zero_page;//raid6_empty_zero_page;
+        ptrs[disks-1] = dq;
+
+        raid6_call.gen_syndrome(disks, bytes, ptrs);
+
+        /* Restore pointer table */
+        ptrs[faila]   = dq;
+        ptrs[disks-1] = q;
+
+        /* Now, pick the proper data tables */
+        qmul  = raid6_gfmul[raid6_gfinv[raid6_gfexp[faila]]];
+
+        /* Now do it... */
+        while ( bytes-- ) {
+                *p++ ^= *dq = qmul[*q ^ *dq];
+                q++; dq++;
+        }
+}
+#endif
+
+
 static int client_read_done(struct kernel_cb * cb, struct ib_wc *wc)
 {
 	int i;
 	struct rdma_ctx *ctx;
-	struct request  *req;
-	struct bio	*bio;
+	struct request *req;
+	bool *completion;
 	
+
 
 	ctx = (struct rdma_ctx *)ptr_from_uint64(wc->wr_id);
 	req = ctx->req;
-	bio = req->bio;
+
+	
+	completion = ctx->completion;
+
+	completion[ctx->index] = 1;
 
         atomic_set(&ctx->in_flight, CTX_IDLE);
+        //IS_bitmap_group_set(ctx->chunk_ptr->bitmap_g, ctx->offset, ctx->len);
         ctx->chunk_index = -1;
         ctx->chunk_ptr = NULL;
         ctx->req = NULL;
 
-#ifdef REP
-
+	#ifdef REP
+	
 	if( atomic_dec_and_test(ctx->cnt) ){
 
 	struct rdma_ctx* ctxs[NDISKS];
-
-
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)
-	if (bio_multiple_segments(bio)){
-        /*read can have segments */
-        struct bio_vec bvl;
-        struct bvec_iter iter;
-        u32  bio_offset= 0;
-
-        bio_for_each_segment(bvl, bio, iter){
-        BUG_ON(bvl.bv_len!= IS_PAGE_SIZE); //each bvec is page
-        memcpy(page_address(bvl.bv_page),
-               ctxs[i]->rdma_buf + bio_offset,
-               IS_PAGE_SIZE);
-        bio_offset += IS_PAGE_SIZE;
-        }
-        }
-        else
-#endif
-	{
-        u32  bio_offset;
-        for (bio_offset=0; bio; bio = bio->bi_next, bio_offset+=IS_PAGE_SIZE){
-        for (i=0; i<NDATAS; i++){
-        memcpy( bio_data(bio)+ i*IS_PAGE_SIZE/NDATAS,
-                ctxs[i]->rdma_buf + bio_offset/NDATAS,
-                IS_PAGE_SIZE/NDATAS );
-        }
-        }
-        }
-
         #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 18, 0)
                 blk_mq_end_request(req, 0);
         #else
-                blk_mq_end_io(req, 0);
+                dlk_mq_end_io(req, 0);
         #endif
 
 	for (i=0; i<NDISKS; i++){
@@ -1086,28 +1154,84 @@ static int client_read_done(struct kernel_cb * cb, struct ib_wc *wc)
 	}
 
 	}
-#endif
+	#endif
+
+	#ifdef PQ
+	if( atomic_dec_and_test(ctx->cnt) ){
+
+	struct rdma_ctx* ctxs[NDISKS];
+	void *ptrs[NDISKS];
+	int recov[NDISKS-NDATAS];
+	int nerrs=0;
+
+	recov[0]= -1;
+	recov[1]= -1;
+
+	for (i=0; i<NDISKS; i++){
+	ctxs[i] = ctx->ctxs[i];
+	if (i < NDATAS){ 
+	ptrs[i] = bio_data(req->bio) + i*(IS_PAGE_SIZE/NDATAS); //point data pieces
+	}
+	else {
+		if (completion[i]) //FIXME needed? if it's NULL?
+		ptrs[i] = ctxs[i]->rdma_buf; //point parity 
+	}
+	}
+	
+	for (i=0, nerrs=0; i<NDATAS; i++){
+		if (!completion[i])
+			recov[nerrs++] = i; //determine which data lost
+	}
+	
+
+	if ( recov[0] >= 0 && recov[1] >= 0 ){
+	//pr_err("**pq recovery %d %d\n", recov[0], recov[1] );
+	read_2data_recov(NDISKS, IS_PAGE_SIZE/NDATAS, recov[0], recov[1], ptrs);
+	}
+	else if (recov[0] >= 0 && completion[NDISKS-2]){
+	//pr_err("**p recovery %d %d\n", recov[0], recov[1] );
+	read_data_precov(NDISKS, IS_PAGE_SIZE/NDATAS, recov[0], ptrs);
+	}
+	else if (recov[0] >= 0 && completion[NDISKS-1]){
+	//pr_err("**q recovery %d %d\n", recov[0], recov[1] );
+	read_data_qrecov(NDISKS, IS_PAGE_SIZE/NDATAS, recov[0], ptrs);
+	}
+
+        #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 18, 0)
+                blk_mq_end_request(req, 0);
+        #else
+                dlk_mq_end_io(req, 0);
+        #endif
+
+	for (i=0; i<NDISKS; i++){
+        IS_insert_ctx(ctxs[i]); //return ctxs
+	}
+
+        }
+	#endif
 
 
-#ifdef EC
-//	printk(" ctx_index %d\n%s", ctx->index, ctx->rdma_buf );
 
-	if( atomic_dec_and_test( ctx->cnt ) ){
+
+	#ifdef EC
+	if( atomic_dec_and_test(ctx->cnt) ){
 
 	struct rdma_ctx* ctxs[NDISKS];
 
-	/*pointers for EC*/
 	unsigned char *ptrs[NDISKS];
 	unsigned char *data[NDATAS];
         unsigned char *recov[NDISKS-NDATAS];
 
-
 	for (i=0; i<NDISKS; i++){
 	ctxs[i] = ctx->ctxs[i];
+
+	if (i < NDATAS) 
+	ptrs[i] = bio_data(req->bio) + i*(IS_PAGE_SIZE/NDATAS); //point data pieces
+	else 
 	ptrs[i] = ctxs[i]->rdma_buf; //point parity 
 	}
+	
 
-	/*	recovery	*/
 	if (nsrcerrs > 0){
 	
 	for (i=0; i < nerrs; i++){ //nsrcerrs?{
@@ -1124,55 +1248,27 @@ static int client_read_done(struct kernel_cb * cb, struct ib_wc *wc)
 		//printk("recovery data: decode index: %d \n", decode_index[i] );
 	}
 
+
 	kernel_fpu_begin();
-	ec_encode_data_avx( blk_rq_bytes(req)/NDATAS, NDATAS, nerrs, decode_tbls, data, recov );
+	ec_encode_data_avx(IS_PAGE_SIZE/NDATAS, NDATAS, nerrs, decode_tbls, data, recov );
 	kernel_fpu_end();
 
 	}
 
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)
-	if (bio_multiple_segments(bio)){
-	/*read can have segments */
-        struct bio_vec bvl;
-        struct bvec_iter iter;
-        u32  bio_offset= 0;
-
-	bio_for_each_segment(bvl, bio, iter){
-	BUG_ON(bvl.bv_len!= IS_PAGE_SIZE); //each bvec is page
-	for(i=0; i<NDATAS; i++){
-        memcpy(page_address(bvl.bv_page) + i*IS_PAGE_SIZE/NDATAS,
-	       ctxs[i]->rdma_buf + bio_offset/NDATAS,
-               IS_PAGE_SIZE/NDATAS);
-        }
-	bio_offset += IS_PAGE_SIZE;
-        }
-	}
-	else
-#endif
-	{
-        u32  bio_offset;
-        for (bio_offset=0; bio; bio = bio->bi_next, bio_offset+=IS_PAGE_SIZE){
-	for (i=0; i<NDATAS; i++){
-        memcpy( bio_data(bio)+ i*IS_PAGE_SIZE/NDATAS,
-		ctxs[i]->rdma_buf + bio_offset/NDATAS,
-                IS_PAGE_SIZE/NDATAS );
-	}
-        }
-        }
-
         #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 18, 0)
                 blk_mq_end_request(req, 0);
         #else
-                blk_mq_end_io(req, 0);
+                dlk_mq_end_io(req, 0);
         #endif
 
 	for (i=0; i<NDISKS; i++){
         IS_insert_ctx(ctxs[i]); //return ctxs
 	}
 
+
 	}	
-#endif
+	#endif
 
         return 0;
 }
@@ -1184,7 +1280,8 @@ static int client_write_done(struct kernel_cb * cb, struct ib_wc *wc)
 
 	ctx = (struct rdma_ctx *)ptr_from_uint64(wc->wr_id);	
 	req = ctx->req;
-	atomic_set(&ctx->in_flight, CTX_IDLE);
+
+
 
 	if( atomic_dec_and_test(ctx->cnt) ){
 
@@ -1192,10 +1289,12 @@ static int client_write_done(struct kernel_cb * cb, struct ib_wc *wc)
 	#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 18, 0)
 		blk_mq_end_request(req, 0);
 	#else
-		blk_mq_end_io(req, 0);
+		dlk_mq_end_io(req, 0);
 	#endif
 	}
 
+	atomic_set(&ctx->in_flight, CTX_IDLE);
+	//IS_bitmap_group_set(ctx->chunk_ptr->bitmap_g, ctx->offset, ctx->len);
 	ctx->chunk_index = -1;
 	ctx->chunk_ptr = NULL;
 	ctx->req = NULL;
@@ -1319,24 +1418,11 @@ static int IS_setup_buffers(struct kernel_cb *cb)
 	pr_info(PFX "IS_setup_buffers called on cb %p\n", cb);
 
 	pr_info(PFX "size of IS_rdma_info %lu\n", sizeof(cb->recv_buf));
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
 	cb->recv_dma_addr = dma_map_single(&cb->pd->device->dev, 
 				   &cb->recv_buf, sizeof(cb->recv_buf), DMA_BIDIRECTIONAL);
-#else
-	cb->recv_dma_addr = dma_map_single(cb->pd->device->dma_device, 
-	     &cb->recv_buf, sizeof(cb->recv_buf), DMA_BIDIRECTIONAL);
-#endif
 	pci_unmap_addr_set(cb, recv_mapping, cb->recv_dma_addr);
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
 	cb->send_dma_addr = dma_map_single(&cb->pd->device->dev, 
 					   &cb->send_buf, sizeof(cb->send_buf), DMA_BIDIRECTIONAL);
-#else
-	cb->send_dma_addr = dma_map_single(cb->pd->device->dma_device, 
-	     &cb->send_buf, sizeof(cb->send_buf), DMA_BIDIRECTIONAL);
-#endif
-
-
 	pci_unmap_addr_set(cb, send_mapping, cb->send_dma_addr);
 	pr_info(PFX "cb->mem=%d \n", cb->mem);
 
@@ -1345,7 +1431,6 @@ static int IS_setup_buffers(struct kernel_cb *cb)
 		cb->dma_mr = cb->pd->device->get_dma_mr(cb->pd, IB_ACCESS_LOCAL_WRITE|
 					   IB_ACCESS_REMOTE_READ|
 				           IB_ACCESS_REMOTE_WRITE);
-
 		if (IS_ERR(cb->dma_mr)) {
 			pr_info(PFX "reg_dmamr failed\n");
 			ret = PTR_ERR(cb->dma_mr);
@@ -1383,23 +1468,13 @@ static void IS_free_buffers(struct kernel_cb *cb)
 	if (cb->rdma_mr)
 		ib_dereg_mr(cb->rdma_mr);
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
+
 	dma_unmap_single(&cb->pd->device->dev,
 			 pci_unmap_addr(cb, recv_mapping),
 			 sizeof(cb->recv_buf), DMA_BIDIRECTIONAL);
 	dma_unmap_single(&cb->pd->device->dev,
 			 pci_unmap_addr(cb, send_mapping),
 			 sizeof(cb->send_buf), DMA_BIDIRECTIONAL);
-#else
-	dma_unmap_single(cb->pd->device->dma_device,
-			 pci_unmap_addr(cb, recv_mapping),
-			 sizeof(cb->recv_buf), DMA_BIDIRECTIONAL);
-	dma_unmap_single(cb->pd->device->dma_device,
-			 pci_unmap_addr(cb, send_mapping),
-			 sizeof(cb->send_buf), DMA_BIDIRECTIONAL);
-#endif
-
-
 
 }
 
@@ -1437,10 +1512,9 @@ static void IS_free_qp(struct kernel_cb *cb)
 static int IS_setup_qp(struct kernel_cb *cb, struct rdma_cm_id *cm_id)
 {
 	int ret;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
 	struct ib_cq_init_attr init_attr;
+
 	memset(&init_attr, 0, sizeof(init_attr));
-#endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
 	cb->pd = ib_alloc_pd(cm_id->device, IB_ACCESS_LOCAL_WRITE|
@@ -1456,14 +1530,12 @@ static int IS_setup_qp(struct kernel_cb *cb, struct rdma_cm_id *cm_id)
 	}
 	pr_info("created pd %p\n", cb->pd);
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
 	init_attr.cqe = cb->txdepth * 2;
 	init_attr.comp_vector = 0;
+	
+	//cb->cq = ib_create_cq(cm_id->device, rdma_cq_event_handler, NULL, cb, cb->txdepth * 2, 0);
+	//cb->cq = ib_create_cq(cm_id->device, rdma_cq_event_handler, NULL, cb, &init_attr);
 	cb->cq = ib_create_cq(cm_id->device, NULL, NULL, cb, &init_attr);
-#else
-//	cb->cq = ib_create_cq(cm_id->device, rdma_cq_event_handler, NULL, cb, cb->txdepth * 2, 0);
-	cb->cq = ib_create_cq(cm_id->device, NULL, NULL, cb, cb->txdepth * 2, 0);
-#endif
 
 
 	if (IS_ERR(cb->cq)) {
@@ -1724,31 +1796,10 @@ static int IS_ctx_init(struct IS_connection *IS_conn, struct kernel_cb *cb, int 
 			ret = -ENOMEM;
 			goto bail;
 		}
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
-		ctx->rdma_dma_addr = dma_map_single(&cb->pd->device->dev,
-                                       ctx->rdma_buf, cb->size,
-                                       DMA_BIDIRECTIONAL);
-#else
-		ctx->rdma_dma_addr = dma_map_single(cb->pd->device->dma_device, 
-        				 ctx->rdma_buf, cb->size, 
-				         DMA_BIDIRECTIONAL);
-#endif
-		pci_unmap_addr_set(ctx, rdma_mapping, ctx->rdma_dma_addr);
-
-		// rdma_buf, peer nodes RDMA write destination
-		ctx->rdma_sgl.addr = ctx->rdma_dma_addr;
-		ctx->rdma_sgl.lkey = cb->qp->device->local_dma_lkey;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
-		ctx->rdma_sq_wr.wr.send_flags = IB_SEND_SIGNALED;
-		ctx->rdma_sq_wr.wr.sg_list = &ctx->rdma_sgl;
 		ctx->rdma_sq_wr.wr.num_sge = 1;
-		ctx->rdma_sq_wr.wr.wr_id = uint64_from_ptr(ctx);
-#else
-		ctx->rdma_sq_wr.send_flags = IB_SEND_SIGNALED;
-		ctx->rdma_sq_wr.sg_list = &ctx->rdma_sgl;
-		ctx->rdma_sq_wr.num_sge = 1;
-		ctx->rdma_sq_wr.wr_id = uint64_from_ptr(ctx);
-#endif
+		ctx->rdma_sq_wr.wr.wr_id = uint64_from_ptr(ctx);		
+		
+		ctx->buffer = kzalloc( IS_PAGE_SIZE/NDATAS, GFP_KERNEL );
 	}
 	#ifdef EC
 	IS_ec_init();
@@ -1891,11 +1942,7 @@ static int kernel_cb_init(struct kernel_cb *cb, struct IS_session *IS_session)
 	init_waitqueue_head(&cb->remote_chunk.sem);
 	cb->remote_chunk.c_state = C_IDLE;
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
 	cb->cm_id = rdma_create_id(&init_net, IS_cma_event_handler, cb, RDMA_PS_TCP, IB_QPT_RC);
-#else
-	cb->cm_id = rdma_create_id(IS_cma_event_handler, cb, RDMA_PS_TCP, IB_QPT_RC);
-#endif
 	if (IS_ERR(cb->cm_id)) {
 		ret = PTR_ERR(cb->cm_id);
 		printk(KERN_ERR PFX "rdma_create_id error %d\n", ret);
@@ -2030,7 +2077,7 @@ int IS_single_chunk_map(struct IS_session *IS_session, int select_chunk)
 
 	for (i=0; i<NDISKS; i++){
 	cb_index = free_mem_sorted[i];
-	pr_err("%s: to cb %d", __func__, cb_index );
+	pr_err("%s: to cb %d = 0", __func__, cb_index );
 	tmp_cb = IS_session->cb_list[cb_index];
 	if (IS_session->cb_state_list[cb_index] == CB_CONNECTED){ 
 		IS_session->mapped_cb_num += 1;
@@ -2040,7 +2087,7 @@ int IS_single_chunk_map(struct IS_session *IS_session, int select_chunk)
 		tmp_cb->remote_chunk.evict_handle_thread = kthread_create(evict_handler, tmp_cb, name);
 		wake_up_process(tmp_cb->remote_chunk.evict_handle_thread);	
 	}
-	printk("chunk%d send bind to cb%d\n", need_chunk+i, cb_index);
+	printk("chunk%d send bind to cb%d\n", need_chunk+i, tmp_cb->cb_index);
 	IS_send_bind_single(tmp_cb, need_chunk + i);
 	rdma_cq_event_handler(tmp_cb->cq, tmp_cb);
 	//BUG_ON(tmp_cb->state != WAIT_OPS);
@@ -2059,7 +2106,7 @@ int IS_session_create(const char *portal, struct IS_session *IS_session)
 	portal_parser(IS_session);
 
 	IS_session->capacity_g = DATASIZE_G; 
-	IS_session->capacity = (unsigned long long)DATASIZE_G * SLAB_SIZE;
+	IS_session->capacity = (unsigned long long)DATASIZE_G * ONE_GB;
 	IS_session->mapped_cb_num = 0;
 	IS_session->mapped_capacity = 0;
 	IS_session->cb_list = (struct kernel_cb **)kzalloc(sizeof(struct kernel_cb *) * IS_session->cb_num, GFP_KERNEL);	
