@@ -426,8 +426,10 @@ void* free_mem(void *data)
 
   while (running) {// server is working
     free_mem_g = (int)(get_free_mem() / ONE_MB);
+    printf("free_mem_g: %d", free_mem_g);
     //need a filter
     filtered_free_mem_g = (int)(CURR_FREE_MEM_WEIGHT * free_mem_g + last_free_mem_g * last_free_mem_weight); 
+    printf("filtered_free_mem_g: %d", filtered_free_mem_g);
     last_free_mem_g = filtered_free_mem_g;
     if (filtered_free_mem_g < FREE_MEM_EVICT_THRESHOLD){
       evict_hit_count += 1;

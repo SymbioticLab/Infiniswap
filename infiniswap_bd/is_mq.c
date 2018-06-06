@@ -402,6 +402,7 @@ void IS_mq_request_stackbd2(struct request *req)
 
 static int IS_request(struct request *req, struct IS_queue *xq)
 {
+	printf("request\n");
 	struct IS_file *xdev = req->rq_disk->private_data;
 	int write = rq_data_dir(req) == WRITE;
 	unsigned long start = blk_rq_pos(req) << IS_SECT_SHIFT;
@@ -484,7 +485,7 @@ static int IS_request(struct request *req, struct IS_queue *xq)
 		IS_mq_request_stackbd(req);
 		return err;
 	}
-
+	printf("remote request\n");
 	if (write){
 		// if rdma_dev_off, go to disk
 		if (atomic_read(&IS_sess->rdma_on) == DEV_RDMA_ON){

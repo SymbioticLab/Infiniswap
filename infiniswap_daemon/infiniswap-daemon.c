@@ -45,6 +45,7 @@ int main(int argc, char **argv)
   TEST_NZ(pthread_create(&free_mem_thread, NULL, (void *)free_mem, NULL));
 
   while (rdma_get_cm_event(ec, &event) == 0) {
+    printf("rdma_get_cm_event\n");
     struct rdma_cm_event event_copy;
 
     memcpy(&event_copy, event, sizeof(*event));
