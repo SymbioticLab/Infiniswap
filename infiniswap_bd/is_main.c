@@ -916,7 +916,7 @@ static void rdma_cq_event_handler(struct ib_cq * cq, void *ctx)
 				break;
 			case IB_WC_RDMA_READ:
 				ret = client_read_done(cb, &wc);
-				printf("client read done\n");
+				pr_info("client read done\n");
 				if (ret) {
 					printk(KERN_ERR PFX "read wc error: %d, cb->state=%d\n", ret, cb->state);
 					goto error;
