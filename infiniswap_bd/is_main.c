@@ -924,7 +924,7 @@ static void rdma_cq_event_handler(struct ib_cq * cq, void *ctx)
 				break;
 			case IB_WC_RDMA_WRITE:
 				ret = client_write_done(cb, &wc);
-				printf("client write done\n");
+				pr_info("client write done\n");
 				if (ret) {
 					printk(KERN_ERR PFX "write wc error: %d, cb->state=%d\n", ret, cb->state);
 					goto error;
@@ -1282,7 +1282,7 @@ static int rdma_trigger(void *data)
 				if (atomic_read(&IS_sess->trigger_enable) == TRIGGER_ON){
 					if (atomic_read(IS_sess->cb_index_map + i) == NO_CB_MAPPED ){
 						do {
-							printf("trigger a slab mapping\n");
+							pr_info("trigger a slab mapping\n");
 							map_res = IS_single_chunk_map(IS_sess, i);
 							map_count += 1;
 						} while (map_res == -1 && map_count < 1);
@@ -1692,7 +1692,7 @@ int IS_single_chunk_map(struct IS_session *IS_session, int select_chunk)
 		wake_up_process(tmp_cb->remote_chunk.evict_handle_thread);	
 	}
 	IS_send_bind_single(tmp_cb, need_chunk);
-	printf("select chunk: %d\n", need_chunk);
+	pr_info("select chunk: %d\n", need_chunk);
 	wait_event_interruptible(tmp_cb->sem, tmp_cb->state == WAIT_OPS);
 	atomic_set(&IS_session->rdma_on, DEV_RDMA_ON); 
 	return need_chunk;
