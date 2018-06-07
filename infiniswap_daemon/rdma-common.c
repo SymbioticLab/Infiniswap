@@ -432,9 +432,9 @@ void* free_mem(void *data)
     printf("filtered_free_mem_g: %d\n", filtered_free_mem_g);
 
     int allocate_g = 0;
-    int i = 0;
-    for (i = 0; i < MAX_FREE_MEM_GB; i++){
-      if (session.rdma_remote.malloc_map[i] == CHUNK_MALLOCED){
+    int cnt = 0;
+    for (cnt = 0; cnt < MAX_FREE_MEM_GB; cnt++){
+      if (session.rdma_remote.malloc_map[cnt] == CHUNK_MALLOCED){
         allocate_g++;
       }
     }
