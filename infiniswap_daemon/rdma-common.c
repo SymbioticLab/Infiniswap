@@ -434,7 +434,7 @@ void* free_mem(void *data)
     int allocate_g = 0;
     int i = 0;
     for (i = 0; i < session.rdma_remote.malloc_map.size(); i++){
-      if (session.rdma_remote.malloc_map.size() == CHUNK_MALLOCED){
+      if (session.rdma_remote.malloc_map[i] == CHUNK_MALLOCED){
         allocate_g++;
       }
     }
