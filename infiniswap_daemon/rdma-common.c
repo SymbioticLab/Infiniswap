@@ -426,19 +426,23 @@ void* free_mem(void *data)
 
   while (running) {// server is working
     free_mem_g = (int)(get_free_mem() / ONE_MB);
-    printf("free_mem_g: %d ", free_mem_g);
+    printf("free_mem_g: %d ****", free_mem_g);
     //need a filter
     filtered_free_mem_g = (int)(CURR_FREE_MEM_WEIGHT * free_mem_g + last_free_mem_g * last_free_mem_weight); 
     printf("filtered_free_mem_g: %d\n", filtered_free_mem_g);
 
     int allocate_g = 0;
+    int connect_g = 0;
     int cnt = 0;
     for (cnt = 0; cnt < MAX_FREE_MEM_GB; cnt++){
       if (session.rdma_remote.malloc_map[cnt] == CHUNK_MALLOCED){
         allocate_g++;
       }
+      if (session.rdma_remote.conn_map[cnt] != -1){
+        connect_g++;
+      }
     }
-    printf("allocated mem_g: %d\n", allocate_g);
+    printf("allocated mem_g: %d **** connected mem_g: %d\n", allocate_g, connect_g);
 
 
     last_free_mem_g = filtered_free_mem_g;
