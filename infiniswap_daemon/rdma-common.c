@@ -424,6 +424,8 @@ void* free_mem(void *data)
   last_free_mem_g = (int)(get_free_mem() / ONE_MB);
   printf("%s, is called, last %d GB, weight: %f, %f\n", __func__, last_free_mem_g, CURR_FREE_MEM_WEIGHT, last_free_mem_weight); 
 
+  int version = 0;
+
   while (running) {// server is working
     free_mem_g = (int)(get_free_mem() / ONE_MB);
     printf("free_mem_g: %d ****", free_mem_g);
@@ -443,6 +445,10 @@ void* free_mem(void *data)
       }
     }
     printf("allocated mem_g: %d **** connected mem_g: %d\n", allocate_g, connect_g);
+
+    FILE* ofile = fopen("/tmp/daemon", 'w');
+    fprintf(ofile, "%d %d %d %d %d %d", 1, free_mem_g, filtered_free_mem_g, allocate_g - connect_g, connect_g, version++);
+    fclose(ofile);
 
 
     last_free_mem_g = filtered_free_mem_g;
