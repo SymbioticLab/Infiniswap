@@ -447,7 +447,7 @@ void* free_mem(void *data)
     printf("allocated mem_g: %d **** connected mem_g: %d\n", allocate_g, connect_g);
 
     FILE* ofile = fopen("/tmp/daemon", 'w');
-    fprintf(ofile, "%d %d %d %d %d %d", 1, free_mem_g, filtered_free_mem_g, allocate_g - connect_g, connect_g, version++);
+    fprintf(ofile, "%d %d %d %d %d %d", 1, version++, free_mem_g, filtered_free_mem_g, allocate_g - connect_g, connect_g);
     fclose(ofile);
 
 
