@@ -400,9 +400,20 @@ void IS_mq_request_stackbd2(struct request *req)
     stackbd_make_request4(stackbd.queue, req);
 }
 
+int total_request = 0;
+int remote_request = 0;
+
 static int IS_request(struct request *req, struct IS_queue *xq)
 {
-	pr_info("request\n");
+	struct timespec ts;
+
+	total_request++;
+	add_request();
+	//printk(KERN_EMERG "total_request: %d\n", total_request);
+	//pr_info("request\n");
+	//record the starting time of receiving the request
+	getnstimeofday(&ts);
+
 	struct IS_file *xdev = req->rq_disk->private_data;
 	int write = rq_data_dir(req) == WRITE;
 	unsigned long start = blk_rq_pos(req) << IS_SECT_SHIFT;
@@ -485,13 +496,15 @@ static int IS_request(struct request *req, struct IS_queue *xq)
 		IS_mq_request_stackbd(req);
 		return err;
 	}
-	pr_info("remote request\n");
+	//pr_info("remote request\n");
+	add_remote_request();
+	printk(KERN_EMERG "remote request: %d\n", remote_request);
 	if (write){
 		// if rdma_dev_off, go to disk
 		if (atomic_read(&IS_sess->rdma_on) == DEV_RDMA_ON){
 		
 			if (status == 1){//single chunk
-				err = IS_transfer_chunk(xdev, cb, cb_index, chunk_index, chunk, chunk_offset, len, write, req, xq);
+				err = IS_transfer_chunk(xdev, cb, cb_index, chunk_index, chunk, chunk_offset, len, write, req, xq, ts);
 			}else{//two chunks (won't be executed)
 				IS_mq_request_stackbd(req);
 			}
@@ -502,7 +515,7 @@ static int IS_request(struct request *req, struct IS_queue *xq)
 		if (atomic_read(&IS_sess->rdma_on) == DEV_RDMA_ON){
 			bitmap_i = (int)(chunk_offset / IS_PAGE_SIZE);
 			if (IS_bitmap_test(chunk->bitmap_g, bitmap_i)){ //remote recorded
-				err = IS_transfer_chunk(xdev, cb, cb_index, chunk_index, chunk, chunk_offset, len, write, req, xq);
+				err = IS_transfer_chunk(xdev, cb, cb_index, chunk_index, chunk, chunk_offset, len, write, req, xq, ts);
 			}else {
 				IS_mq_request_stackbd(req);	
 			}
@@ -524,6 +537,7 @@ static int IS_queue_rq(struct blk_mq_hw_ctx *hctx, struct request *rq, bool last
 static int IS_queue_rq(struct blk_mq_hw_ctx *hctx, struct request *rq)
 #endif
 {
+
 	struct IS_queue *IS_q;
 	int err;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)

@@ -1,0 +1,2 @@
+#!/bin/bash
+scp -r ./ songyuan@apt116.apt.emulab.net:/users/songyuan/gsyinfiniswap

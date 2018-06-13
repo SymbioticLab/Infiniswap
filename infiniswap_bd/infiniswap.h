@@ -90,6 +90,8 @@
 #include <linux/hdreg.h>
 #include <trace/events/block.h>
 
+#include "dashboard.h"
+
 // from NBDX
 #define SUBMIT_BLOCK_SIZE				\
 	+ sizeof(uint32_t) /* raio_filedes */		\
@@ -410,6 +412,7 @@ enum IS_dev_state {
 struct rdma_ctx {
 	struct IS_connection *IS_conn;
 	struct free_ctx_pool *free_ctxs;  //or this one
+	struct timespec ts;
 	//struct mutex ctx_lock;	
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
 	struct ib_rdma_wr rdma_sq_wr;	/* rdma work request record */
@@ -588,7 +591,7 @@ extern int IS_indexes;
 int IS_single_chunk_map(struct IS_session *IS_session, int i);
 int IS_transfer_chunk(struct IS_file *xdev, struct kernel_cb *cb, int cb_index, int chunk_index, struct remote_chunk_g *chunk, unsigned long offset,
 		  unsigned long len, int write, struct request *req,
-		  struct IS_queue *q);
+		  struct IS_queue *q, struct timespec ts);
 int IS_session_create(const char *portal, struct IS_session *IS_session);
 void IS_session_destroy(struct IS_session *IS_session);
 int IS_create_device(struct IS_session *IS_session,
