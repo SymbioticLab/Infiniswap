@@ -452,7 +452,7 @@ void* free_mem(void *data)
     printf("allocated mem_g: %d **** connected mem_g: %d\n", allocate_g, connect_g);
 
     FILE* ofile = fopen("/tmp/daemon", "w");
-    fprintf(ofile, "%d %d %d %d %d %d\n", 1, version++, free_mem_g, filtered_free_mem_g, allocate_g - connect_g, connect_g);
+    fprintf(ofile, "%d %d %d %d %d %d %s\n", 1, version++, free_mem_g, filtered_free_mem_g, allocate_g - connect_g, connect_g, mem_status);
     // print the mapping information to the file
     for (cnt = 0; cnt < MAX_FREE_MEM_GB; cnt++){
       if (mem_status[cnt] == '2'){
