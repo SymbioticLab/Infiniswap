@@ -436,18 +436,30 @@ void* free_mem(void *data)
     int allocate_g = 0;
     int connect_g = 0;
     int cnt = 0;
+    char mem_status[MAX_FREE_MEM_GB + 1];
+
     for (cnt = 0; cnt < MAX_FREE_MEM_GB; cnt++){
+      mem_status[cnt] = '0';
       if (session.rdma_remote.malloc_map[cnt] == CHUNK_MALLOCED){
         allocate_g++;
+        mem_status[cnt] = '1';
       }
       if (session.rdma_remote.conn_map[cnt] != -1){
         connect_g++;
+        mem_status[cnt] = '2';
       }
     }
     printf("allocated mem_g: %d **** connected mem_g: %d\n", allocate_g, connect_g);
 
     FILE* ofile = fopen("/tmp/daemon", "w");
-    fprintf(ofile, "%d %d %d %d %d %d", 1, version++, free_mem_g, filtered_free_mem_g, allocate_g - connect_g, connect_g);
+    fprintf(ofile, "%d %d %d %d %d %d\n", 1, version++, free_mem_g, filtered_free_mem_g, allocate_g - connect_g, connect_g);
+    // print the mapping information to the file
+    for (cnt = 0; cnt < MAX_FREE_MEM_GB; cnt++){
+      if (mem_status[cnt] == '2'){
+        fprintf(ofile, "%d %d\n", session.rdma_remote.conn_map[cnt], session.rdma_remote.conn_chunk_map[cnt]);
+      }
+    }
+
     fclose(ofile);
 
 
