@@ -18,7 +18,7 @@ void add_request(void){
 }
 
 void add_remote_request(void){
-    //pr_info("add_remote_request\n");
+    pr_info("add_remote_request\n");
     info.remote_request_num++;
 }
 
@@ -48,7 +48,7 @@ int write_to_file(void){
 
     fs = get_fs();
     set_fs(KERNEL_DS);
-    vfs_write(fp, content, sizeof(content), &pos);
+    vfs_write(fp, content, strlen(content), &pos);
     filp_close(fp, NULL);
     set_fs(fs);
     return 0;

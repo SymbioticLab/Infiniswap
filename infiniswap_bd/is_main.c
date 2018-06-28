@@ -376,7 +376,8 @@ int IS_transfer_chunk(struct IS_file *xdev, struct kernel_cb *cb, int cb_index, 
 	int cpu, retval = 0;
 
 	cpu = get_cpu();
-	
+
+	add_remote_request();
 
 	if (write){
 		retval = IS_rdma_write(IS_conn, cb, cb_index, chunk_index, chunk, offset, len, req, q, ts); 
