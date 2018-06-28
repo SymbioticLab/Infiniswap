@@ -870,9 +870,6 @@ static int client_write_done(struct kernel_cb * cb, struct ib_wc *wc)
 	getnstimeofday(&end_ts);
 	unsigned long long latency = (end_ts.tv_sec - ctx->ts.tv_sec) * 1000000000 + (end_ts.tv_nsec - ctx->ts.tv_nsec);
 	//printk(KERN_EMERG "write latency: %llu", latency);
-	if (latency > 100000000){
-		//printk(KERN_EMERG "start time: %llu %llu --- end time: %llu %llu\n", ctx->ts.tv_sec, ctx->ts.tv_nsec, end_ts.tv_sec, end_ts.tv_nsec);
-	}
 	add_latency(latency, 1);
 
 	atomic_set(&ctx->in_flight, CTX_IDLE);

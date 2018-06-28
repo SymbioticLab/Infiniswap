@@ -37,8 +37,8 @@ int write_to_file(void){
     mm_segment_t fs;
     loff_t pos = 0;
     char content[100];
-    pr_info("write content: %u %u %u %u %llu %llu", info.read_num, info.write_num,
-         info.request_num, info.remote_request_num, info.avg_read_latency, info.avg_write_latency);
+    //pr_info("write content: %u %u %u %u %llu %llu", info.read_num, info.write_num,
+      //   info.request_num, info.remote_request_num, info.avg_read_latency, info.avg_write_latency);
     sprintf(content, "%u %u %u %u %llu %llu end", info.read_num, info.write_num,
          info.request_num, info.remote_request_num, info.avg_read_latency, info.avg_write_latency);
 
