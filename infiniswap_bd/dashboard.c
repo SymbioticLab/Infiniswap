@@ -18,7 +18,7 @@ void add_request(void){
 }
 
 void add_remote_request(void){
-    pr_info("add_remote_request\n");
+    //pr_info("add_remote_request\n");
     info.remote_request_num++;
 }
 
@@ -39,7 +39,7 @@ int write_to_file(void){
     char content[100];
     pr_info("write content: %u %u %u %u %llu %llu", info.read_num, info.write_num,
          info.request_num, info.remote_request_num, info.avg_read_latency, info.avg_write_latency);
-    sprintf(content, "%u %u %u %u %llu %llu\0", info.read_num, info.write_num,
+    sprintf(content, "%u %u %u %u %llu %llu end", info.read_num, info.write_num,
          info.request_num, info.remote_request_num, info.avg_read_latency, info.avg_write_latency);
 
     fp = filp_open("/tmp/bd_info", O_RDWR | O_CREAT, 0);

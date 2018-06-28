@@ -496,9 +496,7 @@ static int IS_request(struct request *req, struct IS_queue *xq)
 		IS_mq_request_stackbd(req);
 		return err;
 	}
-	//pr_info("remote request\n");
-	add_remote_request();
-	printk(KERN_EMERG "remote request: %d\n", remote_request);
+
 	if (write){
 		// if rdma_dev_off, go to disk
 		if (atomic_read(&IS_sess->rdma_on) == DEV_RDMA_ON){

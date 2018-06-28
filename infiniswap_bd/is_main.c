@@ -151,7 +151,7 @@ int IS_rdma_read(struct IS_connection *IS_conn, struct kernel_cb *cb, int cb_ind
 	}
 
 	ctx->ts = ts;
-	printk(KERN_EMERG "rdma read second: %llu nanosecond: %llu", (unsigned long long) ctx->ts.tv_sec, (unsigned long long) ctx->ts.tv_nsec);
+	//printk(KERN_EMERG "rdma read second: %llu nanosecond: %llu", (unsigned long long) ctx->ts.tv_sec, (unsigned long long) ctx->ts.tv_nsec);
 
 	ctx->req = req;
 	ctx->chunk_index = chunk_index; //chunk_index in cb
@@ -248,7 +248,7 @@ int IS_rdma_write(struct IS_connection *IS_conn, struct kernel_cb *cb, int cb_in
 	}
 
 	ctx->ts = ts;
-	printk(KERN_EMERG "rdma write second: %llu nanosecond: %llu", (unsigned long long) ctx->ts.tv_sec, (unsigned long long) ctx->ts.tv_nsec);
+	//printk(KERN_EMERG "rdma write second: %llu nanosecond: %llu", (unsigned long long) ctx->ts.tv_sec, (unsigned long long) ctx->ts.tv_nsec);
 
 	ctx->req = req;
 	ctx->cb = cb;
@@ -828,9 +828,9 @@ static int client_read_done(struct kernel_cb * cb, struct ib_wc *wc)
 	//calculate the request latency
 	getnstimeofday(&end_ts);
 	unsigned long long latency = (end_ts.tv_sec - ctx->ts.tv_sec) * 1000000000 + (end_ts.tv_nsec - ctx->ts.tv_nsec);
-	printk(KERN_EMERG "read latency: %llu", latency);
+	//printk(KERN_EMERG "read latency: %llu", latency);
 	if (latency > 100000000){
-		printk(KERN_EMERG "start time: %llu %llu --- end time: %llu %llu\n", ctx->ts.tv_sec, ctx->ts.tv_nsec, end_ts.tv_sec, end_ts.tv_nsec);
+		//printk(KERN_EMERG "start time: %llu %llu --- end time: %llu %llu\n", ctx->ts.tv_sec, ctx->ts.tv_nsec, end_ts.tv_sec, end_ts.tv_nsec);
 	}
 	add_latency(latency, 0);
 	
@@ -869,9 +869,9 @@ static int client_write_done(struct kernel_cb * cb, struct ib_wc *wc)
 	//calculate the request latency
 	getnstimeofday(&end_ts);
 	unsigned long long latency = (end_ts.tv_sec - ctx->ts.tv_sec) * 1000000000 + (end_ts.tv_nsec - ctx->ts.tv_nsec);
-	printk(KERN_EMERG "write latency: %llu", latency);
+	//printk(KERN_EMERG "write latency: %llu", latency);
 	if (latency > 100000000){
-		printk(KERN_EMERG "start time: %llu %llu --- end time: %llu %llu\n", ctx->ts.tv_sec, ctx->ts.tv_nsec, end_ts.tv_sec, end_ts.tv_nsec);
+		//printk(KERN_EMERG "start time: %llu %llu --- end time: %llu %llu\n", ctx->ts.tv_sec, ctx->ts.tv_nsec, end_ts.tv_sec, end_ts.tv_nsec);
 	}
 	add_latency(latency, 1);
 
