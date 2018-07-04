@@ -86,6 +86,7 @@ struct connection {
 
   struct rdma_session *sess;
   int conn_index; //conn index in sess->conns
+  char bd_ip[16];
   int sess_chunk_map[MAX_MR_SIZE_GB];
   int mapped_chunk_size;
 
