@@ -77,7 +77,7 @@ long get_free_mem(void)
 }
 
 // return the number of connection
-int build_connection(struct rdma_cm_id *id)
+struct connection * build_connection(struct rdma_cm_id *id)
 {
   int i;
   struct connection *conn;
@@ -110,14 +110,14 @@ int build_connection(struct rdma_cm_id *id)
   }
   conn->mapped_chunk_size = 0;
 
-  int conn_id = -1;
+  struct connection* result = NULL;
   //add to session 
   for (i=0; i<MAX_CLIENT; i++){
     if (session.conns_state[i] == CONN_IDLE){
       session.conns[i] = conn;
       session.conns_state[i] = CONN_CONNECTED;
       conn->conn_index = i;
-      conn_id = i;
+      result = conn;
       break;
     } 
   }
@@ -126,7 +126,7 @@ int build_connection(struct rdma_cm_id *id)
   register_memory(conn);
   post_receives(conn);
 
-  return conn_id;
+  return result;
 }
 
 void build_context(struct ibv_context *verbs)

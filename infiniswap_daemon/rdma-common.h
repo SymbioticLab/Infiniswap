@@ -171,7 +171,7 @@ struct rdma_session {
 
 void die(const char *reason);
 
-void build_connection(struct rdma_cm_id *id);
+struct connection * build_connection(struct rdma_cm_id *id);
 void build_params(struct rdma_conn_param *params);
 void destroy_connection(void *context);
 void * get_serving_mem_region(void *context);

@@ -66,7 +66,7 @@ int on_connect_request(struct rdma_cm_id *id)
   struct rdma_conn_param cm_params;
 
   printf("received connection request.\n");
-  int conn_id = build_connection(id);
+  struct connection* conn = build_connection(id);
   build_params(&cm_params);
   TEST_NZ(rdma_accept(id, &cm_params));
 
@@ -74,8 +74,8 @@ int on_connect_request(struct rdma_cm_id *id)
   struct sockaddr * dst_addr = rdma_get_peer_addr(id);
   struct sockaddr_in * dst_in = (struct sockaddr_in *)dst_addr;
   char * dst_ip = inet_ntoa(dst_in->sin_addr);
-  printf("conn: %d, ip address: %s\n", conn_id, dst_ip);
-  strcpy(session.conns[conn_id].bd_ip, dst_ip);
+  printf("conn: %d, ip address: %s\n", conn->conn_index, dst_ip);
+  strcpy(conn->bd_ip, dst_ip);
   return 0;
 }
 
