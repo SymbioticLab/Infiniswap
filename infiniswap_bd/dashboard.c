@@ -9,16 +9,15 @@ void add_latency(unsigned long long latency, int write)
     {
         if (info.write_num >= MAX_RW_SIZE - 1)
         {
-            pr_info("Error: write number exceed limit");
+            pr_info("Error: write number exceed limit\n");
             return;
         }
-        int i;
+        int i, j;
         for (i = 0; i < container_size; i++)
         {
             if (latency > info.high_write_latency[i])
             {
-                int j = container_size - 1;
-                for (j; j > i; j--)
+                for (j = container_size - 1; j > i; j--)
                 {
                     info.high_write_latency[j] = info.high_write_latency[j - 1];
                 }
@@ -30,8 +29,7 @@ void add_latency(unsigned long long latency, int write)
         {
             if (latency < info.low_write_latency[i])
             {
-                int j = container_size - 1;
-                for (j; j > i; j--)
+                for (j = container_size - 1; j > i; j--)
                 {
                     info.low_write_latency[j] = info.low_write_latency[j - 1];
                 }
@@ -46,16 +44,15 @@ void add_latency(unsigned long long latency, int write)
     {
         if (info.read_num >= MAX_RW_SIZE - 1)
         {
-            pr_info("Error: write number exceed limit");
+            pr_info("Error: read number exceed limit\n");
             return;
         }
-        int i;
+        int i, j;
         for (i = 0; i < container_size; i++)
         {
             if (latency > info.high_read_latency[i])
             {
-                int j = container_size - 1;
-                for (j; j > i; j--)
+                for (j = container_size - 1; j > i; j--)
                 {
                     info.high_read_latency[j] = info.high_read_latency[j - 1];
                 }
@@ -67,8 +64,7 @@ void add_latency(unsigned long long latency, int write)
         {
             if (latency < info.low_read_latency[i])
             {
-                int j = container_size - 1;
-                for (j; j > i; j--)
+                for (j = container_size - 1; j > i; j--)
                 {
                     info.low_read_latency[j] = info.low_read_latency[j - 1];
                 }
@@ -102,10 +98,11 @@ int write_to_file(void)
 {
     int read_ex_size = info.read_num >> EXCEPTION_RATIO;
     int write_ex_size = info.write_num >> EXCEPTION_RATIO;
+    pr_info("read_ex_size: %d\n", read_ex_size);
     struct file *fp;
     mm_segment_t fs;
     loff_t pos = 0;
-    char content[100];
+    char content[200];
     //pr_info("write content: %u %u %u %u %llu %llu", info.read_num, info.write_num,
     //   info.request_num, info.remote_request_num, info.avg_read_latency, info.avg_write_latency);
     int i;
