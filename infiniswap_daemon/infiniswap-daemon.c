@@ -44,7 +44,8 @@ int main(int argc, char **argv)
   running = 1;
   TEST_NZ(pthread_create(&free_mem_thread, NULL, (void *)free_mem, NULL));
 
-  while (rdma_get_cm_event(ec, &event) == 0) {
+  while (rdma_get_cm_event(ec, &event) == 0)
+  {
     printf("rdma_get_cm_event\n");
     struct rdma_cm_event event_copy;
 
@@ -66,16 +67,20 @@ int on_connect_request(struct rdma_cm_id *id)
   struct rdma_conn_param cm_params;
 
   printf("received connection request.\n");
-  struct connection* conn = build_connection(id);
+  struct connection *conn = build_connection(id);
   build_params(&cm_params);
   TEST_NZ(rdma_accept(id, &cm_params));
 
   //get connection ip
-  struct sockaddr * dst_addr = rdma_get_peer_addr(id);
-  struct sockaddr_in * dst_in = (struct sockaddr_in *)dst_addr;
-  char * dst_ip = inet_ntoa(dst_in->sin_addr);
-  printf("conn: %d, ip address: %s\n", conn->conn_index, dst_ip);
-  strcpy(conn->bd_ip, dst_ip);
+  struct sockaddr *dst_addr = rdma_get_peer_addr(id);
+  struct sockaddr_in *dst_in = (struct sockaddr_in *)dst_addr;
+  char *dst_ip = inet_ntoa(dst_in->sin_addr);
+  if (conn)
+  {
+    printf("conn: %d, ip address: %s\n", conn->conn_index, dst_ip);
+    strcpy(conn->bd_ip, dst_ip);
+  }
+
   return 0;
 }
 
