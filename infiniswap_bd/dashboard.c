@@ -100,7 +100,8 @@ void clear_info(void)
 
 int write_to_file(void)
 {
-    int container_size = EXCEPTION_RATIO * MAX_RW_SIZE;
+    int read_ex_size = EXCEPTION_RATIO * info.read_num;
+    int write_ex_size = EXCEPTION_RATIO * info.write_num;
     struct file *fp;
     mm_segment_t fs;
     loff_t pos = 0;
@@ -109,10 +110,13 @@ int write_to_file(void)
     //   info.request_num, info.remote_request_num, info.avg_read_latency, info.avg_write_latency);
     int i;
     int exception_read_tot = 0, exception_write_tot = 0;
-    for (i = 0; i < info.read_num * EXCEPTION_RATIO; i++)
+    for (i = 0; i < read_ex_size; i++)
     {
         exception_read_tot += (info.high_read_latency[i] + info.low_read_latency[i]);
-            exception_write_tot += (info.high_write_latency[i] + info.low_write_latency[i]);
+    }
+    for (i = 0; i < write_ex_size; i++)
+    {
+        exception_write_tot += (info.high_write_latency[i] + info.low_write_latency[i]);
     }
     info.high_ex_read_latency = info.high_read_latency[(int)(info.read_num * EXCEPTION_RATIO)];
     info.low_ex_read_latency = info.low_read_latency[(int)(info.read_num * EXCEPTION_RATIO)];
