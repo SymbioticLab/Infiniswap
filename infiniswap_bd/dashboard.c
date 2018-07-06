@@ -4,7 +4,7 @@ struct bd_info info;
 
 void add_latency(unsigned long long latency, int write)
 {
-    int container_size = EXCEPTION_RATIO * MAX_RW_SIZE;
+    int container_size = MAX_RW_SIZE >> EXCEPTION_RATIO;
     if (write)
     {
         if (info.write_num >= MAX_RW_SIZE - 1)
@@ -100,8 +100,8 @@ void clear_info(void)
 
 int write_to_file(void)
 {
-    int read_ex_size = EXCEPTION_RATIO * info.read_num;
-    int write_ex_size = EXCEPTION_RATIO * info.write_num;
+    int read_ex_size = info.read_num >> EXCEPTION_RATIO;
+    int write_ex_size = info.write_num >> EXCEPTION_RATIO;
     struct file *fp;
     mm_segment_t fs;
     loff_t pos = 0;
@@ -118,13 +118,13 @@ int write_to_file(void)
     {
         exception_write_tot += (info.high_write_latency[i] + info.low_write_latency[i]);
     }
-    info.high_ex_read_latency = info.high_read_latency[(int)(info.read_num * EXCEPTION_RATIO)];
-    info.low_ex_read_latency = info.low_read_latency[(int)(info.read_num * EXCEPTION_RATIO)];
-    info.high_ex_write_latency = info.high_write_latency[(int)(info.write_num * EXCEPTION_RATIO)];
-    info.low_ex_write_latency = info.low_write_latency[(int)(info.write_num * EXCEPTION_RATIO)];
+    info.high_ex_read_latency = info.high_read_latency[read_ex_size];
+    info.low_ex_read_latency = info.low_read_latency[read_ex_size];
+    info.high_ex_write_latency = info.high_write_latency[write_ex_size];
+    info.low_ex_write_latency = info.low_write_latency[write_ex_size];
     // calculate the filtered average (without the very high and very low part)
-    info.avg_read_latency = (info.avg_read_latency * info.read_num - exception_read_tot) / (info.read_num * (1 - EXCEPTION_RATIO * 2));
-    info.avg_write_latency = (info.avg_write_latency * info.write_num - exception_write_tot) / (info.write_num * (1 - EXCEPTION_RATIO * 2));
+    info.avg_read_latency = (info.avg_read_latency * info.read_num - exception_read_tot) / (info.read_num - 2 * read_ex_size);
+    info.avg_write_latency = (info.avg_write_latency * info.write_num - exception_write_tot) / (info.write_num - 2 * write_ex_size);
     sprintf(content, "%u %u %u %u %llu %llu %llu %llu %llu %llu end", info.read_num, info.write_num,
             info.request_num, info.remote_request_num, info.avg_read_latency, info.avg_write_latency,
             info.high_ex_read_latency, info.low_ex_read_latency, info.high_ex_write_latency, info.low_ex_write_latency);

@@ -8,8 +8,8 @@
 #include <linux/delay.h>
 #include <linux/string.h>
 
-#define EXCEPTION_RATIO 0.05
-#define MAX_RW_SIZE 20000
+#define EXCEPTION_RATIO 5
+#define MAX_RW_SIZE 32768
 
 struct bd_info
 {
@@ -19,10 +19,10 @@ struct bd_info
     unsigned long long low_ex_read_latency;
     unsigned long long high_ex_write_latency;
     unsigned long long low_ex_write_latency;
-    unsigned long long high_read_latency[(int)(EXCEPTION_RATIO * MAX_RW_SIZE)];
-    unsigned long long low_read_latency[(int)(EXCEPTION_RATIO * MAX_RW_SIZE)];
-    unsigned long long high_write_latency[(int)(EXCEPTION_RATIO * MAX_RW_SIZE)];
-    unsigned long long low_write_latency[(int)(EXCEPTION_RATIO * MAX_RW_SIZE)];
+    unsigned long long high_read_latency[MAX_RW_SIZE >> EXCEPTION_RATIO];
+    unsigned long long low_read_latency[MAX_RW_SIZE >> EXCEPTION_RATIO];
+    unsigned long long high_write_latency[MAX_RW_SIZE >> EXCEPTION_RATIO];
+    unsigned long long low_write_latency[MAX_RW_SIZE >> EXCEPTION_RATIO];
     unsigned read_num;
     unsigned write_num;
     unsigned request_num;
