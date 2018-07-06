@@ -6,10 +6,22 @@
 #include <linux/fs.h>
 #include <linux/uaccess.h>
 #include <linux/delay.h>
+#include <linux/string.h>
+
+#define EXCEPTION_RATIO 0.05
+#define MAX_RW_SIZE 20000
 
 struct bd_info{
     unsigned long long avg_read_latency;
     unsigned long long avg_write_latency;
+    unsigned long long high_ex_read_latency;
+    unsigned long long low_ex_read_latency;
+    unsigned long long high_ex_write_latency;
+    unsigned long long low_ex_write_latency;
+    unsigned long long high_read_latency[EXCEPTION_RATIO * MAX_RW_SIZE];
+    unsigned long long low_read_latency[EXCEPTION_RATIO * MAX_RW_SIZE];
+    unsigned long long high_write_latency[EXCEPTION_RATIO * MAX_RW_SIZE];
+    unsigned long long low_write_latency[EXCEPTION_RATIO * MAX_RW_SIZE];
     unsigned read_num;
     unsigned write_num;
     unsigned request_num;
