@@ -462,7 +462,7 @@ void* free_mem(void *data)
     // print the mapping information to the file
     for (cnt = 0; cnt < MAX_FREE_MEM_GB; cnt++){
       if (mem_status[cnt] == '2'){
-        fprintf(ofile, "%s %d\n", session.conns[i].bd_ip, session.rdma_remote.conn_chunk_map[cnt]);
+        fprintf(ofile, "%s %d\n", session.conns[i]->bd_ip, session.rdma_remote.conn_chunk_map[cnt]);
       }
     }
 
