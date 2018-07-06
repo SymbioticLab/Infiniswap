@@ -9,7 +9,7 @@
 #include <linux/string.h>
 
 #define EXCEPTION_RATIO 5
-#define MAX_RW_SIZE 32768
+#define MAX_RW_SIZE 65536
 
 struct bd_info
 {

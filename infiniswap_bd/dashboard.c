@@ -27,7 +27,7 @@ void add_latency(unsigned long long latency, int write)
         }
         for (i = 0; i < container_size; i++)
         {
-            if (latency < info.low_write_latency[i])
+            if (latency < info.low_write_latency[i] || info.low_write_latency[i] == 0)
             {
                 for (j = container_size - 1; j > i; j--)
                 {
