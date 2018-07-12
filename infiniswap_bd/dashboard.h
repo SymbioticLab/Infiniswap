@@ -13,16 +13,8 @@
 
 struct bd_info
 {
-    unsigned long long avg_read_latency;
-    unsigned long long avg_write_latency;
-    unsigned long long high_ex_read_latency;
-    unsigned long long low_ex_read_latency;
-    unsigned long long high_ex_write_latency;
-    unsigned long long low_ex_write_latency;
-    unsigned long long high_read_latency[MAX_RW_SIZE >> EXCEPTION_RATIO];
-    unsigned long long low_read_latency[MAX_RW_SIZE >> EXCEPTION_RATIO];
-    unsigned long long high_write_latency[MAX_RW_SIZE >> EXCEPTION_RATIO];
-    unsigned long long low_write_latency[MAX_RW_SIZE >> EXCEPTION_RATIO];
+    unsigned long long read_latency[MAX_RW_SIZE];
+    unsigned long long write_latency[MAX_RW_SIZE];
     unsigned read_num;
     unsigned write_num;
     unsigned request_num;
