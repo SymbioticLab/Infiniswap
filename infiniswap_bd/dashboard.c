@@ -6,15 +6,18 @@ char* read_latency_files[] = {"/tmp/bd_read_latency_1", "/tmp/bd_read_latency_2"
 char* bd_info_files[] = {"/tmp/bd_info_1", "/tmp/bd_info_2", "/tmp/bd_info_3"};
 int file_version = 0;
 
-void add_latency(unsigned long long latency, int write)
+void add_latency(unsigned long long latency, u8 cb_index, int write)
 {
-    pr_info("add_latency\n");
+    //pr_info("add_latency\n");
+    // convert the latency from nanosecond to microsecond
     if (write){
-        info.write_latency[info.write_num] = latency / 1000;
+        info.write_latency[info.write_num].latency = (unsigned) (latency / 1000);
+        info.write_latency[info.write_num].cb_index = cb_index;
         info.write_num++;
     }
     else {
-        info.read_latency[info.read_num] = latency / 1000;
+        info.read_latency[info.read_num].latency = (unsigned) (latency / 1000);
+        info.read_latency[info.write_num].cb_index = cb_index;
         info.read_num++;
     }
 }
@@ -40,7 +43,7 @@ void clear_info(void)
 
 int write_to_file(void)
 {
-    pr_info("write_to_file\n");
+    //pr_info("write_to_file\n");
     int i;
     struct file *fp;
     mm_segment_t fs;
@@ -52,13 +55,10 @@ int write_to_file(void)
     //memset(emptyfile, 0, sizeof(emptyfile));
     memset(version, '\0', sizeof(version));
 
-    pr_info("after memset\n");
     sprintf(content, "%u %u %u %u", info.read_num, info.write_num,
             info.request_num, info.remote_request_num);
 
-    pr_info("after sprintf\n");
     fp = filp_open(bd_info_files[file_version], O_RDWR | O_CREAT, 0);
-    pr_info("after flipopen\n");
     if (IS_ERR(fp))
     {
         pr_info("Error: open file\n");
@@ -69,11 +69,9 @@ int write_to_file(void)
     set_fs(KERNEL_DS);
     vfs_write(fp, content, sizeof(content), &pos);
     
-    pr_info("after filp_close\n");
     filp_close(fp, NULL);
     set_fs(fs);
 
-    pr_info("write second file\n");
     pos = 0;
     fp = filp_open(read_latency_files[file_version], O_RDWR | O_CREAT, 0);
     if (IS_ERR(fp))
@@ -87,7 +85,7 @@ int write_to_file(void)
     for (i = 0; i < info.read_num; i++){
         char buffer[20];
         memset(buffer, 0, sizeof(buffer));
-        sprintf(buffer, "%llu ", info.read_latency[i]);
+        sprintf(buffer, "%u %u ", info.read_latency[i].latency, info.read_latency[i].cb_index);
         vfs_write(fp, buffer, sizeof(buffer), &pos);
         pos += sizeof(buffer);
     }
@@ -109,7 +107,7 @@ int write_to_file(void)
     for (i = 0; i < info.write_num; i++){
         char buffer[20];
         memset(buffer, 0, sizeof(buffer));
-        sprintf(buffer, "%llu ", info.write_latency[i]);
+        sprintf(buffer, "%u %u ", info.write_latency[i].latency, info.write_latency[i].cb_index);
         vfs_write(fp, buffer, sizeof(buffer), &pos);
         pos += sizeof(buffer);
     }
@@ -143,12 +141,12 @@ void write_info(void)
         /*
         int i;
         // test latency calculation
-        for (i = 1; i <= 100; i++){
-            add_latency(i * 1000, 0);
-            add_latency(i * 1000, 1);
+        for (i = 900; i <= 1000; i++){
+            add_latency(i * 1000, 0, 0);
+            add_latency(i * 1000, 2, 1);
         }
         */
-        
+    
         write_to_file();
         clear_info();
     }

@@ -832,7 +832,7 @@ static int client_read_done(struct kernel_cb * cb, struct ib_wc *wc)
 	if (latency > 100000000){
 		//printk(KERN_EMERG "start time: %llu %llu --- end time: %llu %llu\n", ctx->ts.tv_sec, ctx->ts.tv_nsec, end_ts.tv_sec, end_ts.tv_nsec);
 	}
-	add_latency(latency, 0);
+	add_latency(latency, (u8) cb->cb_index, 0);
 	
 
 	atomic_set(&ctx->in_flight, CTX_IDLE);
@@ -870,7 +870,7 @@ static int client_write_done(struct kernel_cb * cb, struct ib_wc *wc)
 	getnstimeofday(&end_ts);
 	unsigned long long latency = (end_ts.tv_sec - ctx->ts.tv_sec) * 1000000000 + (end_ts.tv_nsec - ctx->ts.tv_nsec);
 	//printk(KERN_EMERG "write latency: %llu", latency);
-	add_latency(latency, 1);
+	add_latency(latency, (u8) cb->cb_index, 1);
 
 	atomic_set(&ctx->in_flight, CTX_IDLE);
 	IS_bitmap_group_set(ctx->chunk_ptr->bitmap_g, ctx->offset, ctx->len);

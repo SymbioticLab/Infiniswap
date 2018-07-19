@@ -413,7 +413,7 @@ struct rdma_ctx {
 	struct IS_connection *IS_conn;
 	struct free_ctx_pool *free_ctxs;  //or this one
 	struct timespec ts;
-	//struct mutex ctx_lock;	
+	//struct mutex ctx_lock;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
 	struct ib_rdma_wr rdma_sq_wr;	/* rdma work request record */
 #else

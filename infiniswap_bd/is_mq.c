@@ -409,8 +409,6 @@ static int IS_request(struct request *req, struct IS_queue *xq)
 
 	total_request++;
 	add_request();
-	//printk(KERN_EMERG "total_request: %d\n", total_request);
-	//pr_info("request\n");
 	//record the starting time of receiving the request
 	getnstimeofday(&ts);
 

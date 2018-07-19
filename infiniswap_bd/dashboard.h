@@ -9,12 +9,18 @@
 #include <linux/string.h>
 
 #define EXCEPTION_RATIO 5
-#define MAX_RW_SIZE 65536
+#define MAX_RW_SIZE 150000
+
+struct connection_latency
+{
+    unsigned latency;
+    u8 cb_index;
+};
 
 struct bd_info
 {
-    unsigned long long read_latency[MAX_RW_SIZE];
-    unsigned long long write_latency[MAX_RW_SIZE];
+    struct connection_latency read_latency[MAX_RW_SIZE];
+    struct connection_latency write_latency[MAX_RW_SIZE];
     unsigned read_num;
     unsigned write_num;
     unsigned request_num;
@@ -25,7 +31,7 @@ void add_request(void);
 
 void add_remote_request(void);
 
-void add_latency(unsigned long long latency, int write);
+void add_latency(unsigned long long latency, u8 cb_index, int write);
 
 void clear_info(void);
 
