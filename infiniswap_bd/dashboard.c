@@ -8,7 +8,6 @@ int file_version = 0;
 
 void add_latency(unsigned long long latency, u8 cb_index, int write)
 {
-    //pr_info("add_latency\n");
     // convert the latency from nanosecond to microsecond
     if (write){
         info.write_latency[info.write_num].latency = (unsigned) (latency / 1000);
@@ -29,13 +28,11 @@ void add_request(void)
 
 void add_remote_request(void)
 {
-    //pr_info("add_remote_request\n");
     info.remote_request_num++;
 }
 
 void clear_info(void)
 {
-    pr_info("clear info\n");
     memset(&info, 0, sizeof(info));
     file_version++;
     file_version %= 3;
@@ -43,16 +40,13 @@ void clear_info(void)
 
 int write_to_file(void)
 {
-    //pr_info("write_to_file\n");
     int i;
     struct file *fp;
     mm_segment_t fs;
     loff_t pos = 0;
     char content[200];
-    //char emptyfile[20 * MAX_RW_SIZE]; 
     char version[20];
     memset(content, '\0', sizeof(content));
-    //memset(emptyfile, 0, sizeof(emptyfile));
     memset(version, '\0', sizeof(version));
 
     sprintf(content, "%u %u %u %u", info.read_num, info.write_num,
@@ -81,7 +75,7 @@ int write_to_file(void)
     }
     fs = get_fs();
     set_fs(KERNEL_DS);
-    //vfs_write(fp, emptyfile, sizeof(emptyfile), &pos);
+
     for (i = 0; i < info.read_num; i++){
         char buffer[20];
         memset(buffer, 0, sizeof(buffer));
@@ -93,7 +87,6 @@ int write_to_file(void)
     filp_close(fp, NULL);
     set_fs(fs);
 
-    pr_info("write third file\n");
     pos = 0;
     fp = filp_open(write_latency_files[file_version], O_RDWR | O_CREAT, 0);
     if (IS_ERR(fp))
@@ -103,7 +96,6 @@ int write_to_file(void)
     }
     fs = get_fs();
     set_fs(KERNEL_DS);
-    //vfs_write(fp, emptyfile, sizeof(emptyfile), &pos);
     for (i = 0; i < info.write_num; i++){
         char buffer[20];
         memset(buffer, 0, sizeof(buffer));
