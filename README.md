@@ -202,6 +202,12 @@ When you use inbox driver, you can compile/link against kernel headers/modules.
 When you use Mellanox OFED, you need to compile/link against OFED headers/modules.
 This should be handled by configure file, and refer the Makefile that links OFED modules.
 
+4. Others issues about compatibility
+    1. `lookup_bdev()` has two arguments in the [kernel patch](https://www.redhat.com/archives/dm-devel/2016-April/msg00372.html)
+      Turn on `LOOKUP_BDEV_PATCH` at line 49 in ``is_mq.c`` if your OS has this patch; otherwise, just comment it out.
+
+
+    
 
 Contact
 -----------

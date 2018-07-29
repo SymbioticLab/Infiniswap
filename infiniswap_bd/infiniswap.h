@@ -600,7 +600,11 @@ void IS_unregister_block_device(struct IS_file *IS_file);
 int IS_setup_queues(struct IS_file *xdev);
 void IS_destroy_queues(struct IS_file *xdev);
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+blk_qc_t stackbd_make_request(struct request_queue *q, struct bio *bio);
+#else
 void stackbd_make_request(struct request_queue *q, struct bio *bio);
+#endif
 void stackbd_make_request2(struct request_queue *q, struct request *req);
 void stackbd_make_request3(struct request_queue *q, struct request *req);
 void stackbd_make_request4(struct request_queue *q, struct request *req);

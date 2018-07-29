@@ -45,6 +45,14 @@
 
 #include "infiniswap.h"
 
+/* lookup_bdev patch: https://www.redhat.com/archives/dm-devel/2016-April/msg00372.html */
+//#define LOOKUP_BDEV_PATCH
+#ifdef LOOKUP_BDEV_PATCH
+#define LOOKUP_BDEV(x) lookup_bdev(x, 0)
+#else
+#define LOOKUP_BDEV(x) lookup_bdev(x)
+#endif
+
 
 void IS_stackbd_end_io(struct bio *bio, int err)
 {
@@ -83,7 +91,7 @@ static void stackbd_io_fn(struct bio *bio)
 
 	bio->bi_bdev = stackbd.bdev_raw;
 	trace_block_bio_remap(bdev_get_queue(stackbd.bdev_raw), bio, bio->bi_bdev->bd_dev, 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)
 	bio->bi_iter.bi_sector);
 #else
 	bio->bi_sector);
@@ -243,7 +251,11 @@ abort:
 }
 
 // from original stackbd
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+blk_qc_t stackbd_make_request(struct request_queue *q, struct bio *bio)
+#else
 void stackbd_make_request(struct request_queue *q, struct bio *bio)
+#endif
 {
     spin_lock_irq(&stackbd.lock);
     if (!stackbd.bdev_raw)
@@ -259,21 +271,32 @@ void stackbd_make_request(struct request_queue *q, struct bio *bio)
     bio_list_add(&stackbd.bio_list, bio);
     wake_up(&req_event);
     spin_unlock_irq(&stackbd.lock);
+
+    #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+    return 0;
+    #else
     return;
+    #endif
 abort:
     spin_unlock_irq(&stackbd.lock);
     printk("<%p> Abort request\n\n", bio);
     bio_io_error(bio);
+    #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+    return 0;
+    #endif
 }
 
 static struct block_device *stackbd_bdev_open(char dev_path[])
 {
     /* Open underlying device */
+	/*
    #if LINUX_VERSION_CODE == KERNEL_VERSION(4, 4, 0)
         struct block_device *bdev_raw = lookup_bdev(dev_path, 0);
    #else
         struct block_device *bdev_raw = lookup_bdev(dev_path);
    #endif 
+	*/
+    struct block_device *bdev_raw = LOOKUP_BDEV(dev_path);
 
     printk("Opened %s\n", dev_path);
     if (IS_ERR(bdev_raw))
@@ -565,7 +588,7 @@ static int IS_init_hctx(struct blk_mq_hw_ctx *hctx, void *data,
 static struct blk_mq_ops IS_mq_ops = {
 	.queue_rq       = IS_queue_rq,
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0)
 	.map_queues      = blk_mq_map_queues,  
 #else
 	.map_queue      = blk_mq_map_queue,  
