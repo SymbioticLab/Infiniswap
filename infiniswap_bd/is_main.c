@@ -1292,6 +1292,9 @@ static int rdma_trigger(void *data)
 	}
 
 	while (1) {
+		if (IS_sess->destroy){
+			break;
+		}
 		for (i=0; i<STACKBD_SIZE_G; i++){
 			spin_lock_irq(&IS_sess->write_ops_lock[i]);
 			cur_write_ops = IS_sess->write_ops[i];
@@ -1364,6 +1367,8 @@ void IS_destroy_device(struct IS_session *IS_session,
                          struct IS_file *IS_file)
 {
 	pr_info("%s\n", __func__);
+
+	IS_session->destroy = 1;
 
 	IS_set_device_state(IS_file, DEVICE_OFFLINE);
 	if (IS_file->disk){
@@ -1734,6 +1739,7 @@ int IS_session_create(const char *portal, struct IS_session *IS_session)
 	pr_err("%s\n", IS_session->portal);
 	portal_parser(IS_session);
 
+	IS_session->destroy = 0;
 	IS_session->capacity_g = STACKBD_SIZE_G; 
 	IS_session->capacity = (unsigned long long)STACKBD_SIZE_G * ONE_GB;
 	IS_session->mapped_cb_num = 0;

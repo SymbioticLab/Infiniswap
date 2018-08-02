@@ -486,6 +486,8 @@ enum cb_state {
 #define SERVER_SELECT_NUM 1
 
 struct IS_session {
+	int destroy; // 0 running, 1 destroyed
+
 	// Nov19 request distribution
 	unsigned long int *read_request_count;	//how many requests on each CPU
 	unsigned long int *write_request_count;	//how many requests on each CPU
