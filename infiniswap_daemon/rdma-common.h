@@ -54,7 +54,6 @@ struct control_msg{
 };
 
 pthread_t control_msg_listen_thread;
-int control_msg_listen_port = 11006;
 // *********************
 
 struct message {

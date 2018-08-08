@@ -6,11 +6,13 @@
 
 #include "rdma-common.h"
 
+static int control_msg_listen();
 static int on_connect_request(struct rdma_cm_id *id);
 static int on_connection(struct rdma_cm_id *id);
 static int on_disconnect(struct rdma_cm_id *id);
 static int on_event(struct rdma_cm_event *event);
 static void usage(const char *argv0);
+int control_msg_listen_port = 11006;
 long page_size;
 int running;
 int main(int argc, char **argv)
@@ -69,7 +71,7 @@ int control_msg_listen()
 
   if (sock == -1)
   {
-    cerr << "cannot open stream socket!\n";
+    printf("cannot open stream socket!\n");
     exit(1);
   }
 
@@ -100,7 +102,7 @@ int control_msg_listen()
     }
     else
     {
-      control_msg msg;
+      struct control_msg msg;
       recv(msgsock, &msg, sizeof(msg), MSG_WAITALL);
       printf("Receive control message: %s\n", msg.cmd);
     }
