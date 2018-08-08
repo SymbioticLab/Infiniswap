@@ -48,6 +48,14 @@ enum mode {
   M_READ
 };
 
+// add control msg info
+struct control_msg{
+	char cmd[20];
+}
+
+pthread_t control_msg_listen_thread;
+int control_msg_listen_port = 11006;
+// *********************
 
 struct message {
   uint64_t buf[MAX_MR_SIZE_GB];
