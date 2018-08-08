@@ -80,8 +80,8 @@ int control_msg_listen()
   struct sockaddr_in addr;
   memset(&addr, 0, sizeof(addr));
   addr.sin_family = AF_INET;
-  addr.sin_addr.s_addr = inet_addr(server_ip);
-  addr.sin_port = htons(hostport);
+  addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+  addr.sin_port = htons(control_msg_listen_port);
   bind(sock, (struct sockaddr *)&addr, sizeof(addr));
   socklen_t length = sizeof(addr);
   if (getsockname(sock, (struct sockaddr *)&addr, &length) == -1)
