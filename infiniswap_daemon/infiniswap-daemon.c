@@ -91,7 +91,7 @@ int control_msg_listen()
 
   listen(sock, 10);
 
-  while (true)
+  while (1)
   {
     int msgsock = accept(sock, (struct sockaddr *)0, (socklen_t *)0);
     if (msgsock == -1)
