@@ -42,6 +42,8 @@
 #ifndef INFINISWAP_H
 #define INFINISWAP_H
 
+#define IS_GUI
+
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/kthread.h>
@@ -412,7 +414,9 @@ enum IS_dev_state {
 struct rdma_ctx {
 	struct IS_connection *IS_conn;
 	struct free_ctx_pool *free_ctxs;  //or this one
+#ifdef
 	struct timespec ts;
+#endif
 	//struct mutex ctx_lock;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
 	struct ib_rdma_wr rdma_sq_wr;	/* rdma work request record */
@@ -591,9 +595,16 @@ extern int IS_major;
 extern int IS_indexes;
 
 int IS_single_chunk_map(struct IS_session *IS_session, int i);
+#ifdef IS_GUI
 int IS_transfer_chunk(struct IS_file *xdev, struct kernel_cb *cb, int cb_index, int chunk_index, struct remote_chunk_g *chunk, unsigned long offset,
 		  unsigned long len, int write, struct request *req,
 		  struct IS_queue *q, struct timespec ts);
+#else
+int IS_transfer_chunk(struct IS_file *xdev, struct kernel_cb *cb, int cb_index, int chunk_index, struct remote_chunk_g *chunk, unsigned long offset,
+		  unsigned long len, int write, struct request *req,
+		  struct IS_queue *q); 
+#endif 
+
 int IS_session_create(const char *portal, struct IS_session *IS_session);
 void IS_session_destroy(struct IS_session *IS_session);
 int IS_create_device(struct IS_session *IS_session,

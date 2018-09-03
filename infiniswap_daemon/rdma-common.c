@@ -433,11 +433,16 @@ void* free_mem(void *data)
 
   while (running) {// server is working
     free_mem_g = (int)(get_free_mem() / ONE_MB);
-    printf("free_mem_g: %d ****", free_mem_g);
+#ifdef IS_GUI
+    //printf("free_mem_g: %d ****", free_mem_g);
+#endif
     //need a filter
     filtered_free_mem_g = (int)(CURR_FREE_MEM_WEIGHT * free_mem_g + last_free_mem_g * last_free_mem_weight); 
-    printf("filtered_free_mem_g: %d\n", filtered_free_mem_g);
+#ifdef IS_GUI
+    //printf("filtered_free_mem_g: %d\n", filtered_free_mem_g);
+#endif
 
+#ifdef IS_GUI
     int allocate_g = 0;
     int connect_g = 0;
     int cnt = 0;
@@ -455,7 +460,7 @@ void* free_mem(void *data)
       }
     }
     mem_status[MAX_FREE_MEM_GB] = '\0';
-    printf("allocated mem_g: %d **** connected mem_g: %d\n", allocate_g, connect_g);
+    //printf("allocated mem_g: %d **** connected mem_g: %d\n", allocate_g, connect_g);
 
     FILE* ofile = fopen("/tmp/daemon", "w");
     fprintf(ofile, "%d %d %d %d %d %d %s\n", 1, version++, free_mem_g, filtered_free_mem_g, allocate_g - connect_g, connect_g, mem_status);
@@ -467,7 +472,7 @@ void* free_mem(void *data)
     }
 
     fclose(ofile);
-
+#endif
 
     last_free_mem_g = filtered_free_mem_g;
     if (filtered_free_mem_g < FREE_MEM_EVICT_THRESHOLD){

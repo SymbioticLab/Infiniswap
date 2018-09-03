@@ -6,6 +6,8 @@
 #ifndef RDMA_COMMON_H
 #define RDMA_COMMON_H
 
+#define IS_GUI
+
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,13 +50,14 @@ enum mode {
   M_READ
 };
 
+#ifdef IS_GUI
 // add control msg info
 struct control_msg{
 	char cmd[20];
 };
 
 pthread_t control_msg_listen_thread;
-// *********************
+#endif
 
 struct message {
   uint64_t buf[MAX_MR_SIZE_GB];
