@@ -414,7 +414,7 @@ enum IS_dev_state {
 struct rdma_ctx {
 	struct IS_connection *IS_conn;
 	struct free_ctx_pool *free_ctxs;  //or this one
-#ifdef
+#ifdef IS_GUI
 	struct timespec ts;
 #endif
 	//struct mutex ctx_lock;

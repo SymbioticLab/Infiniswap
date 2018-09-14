@@ -429,7 +429,9 @@ void* free_mem(void *data)
   last_free_mem_g = (int)(get_free_mem() / ONE_MB);
   printf("%s, is called, last %d GB, weight: %f, %f\n", __func__, last_free_mem_g, CURR_FREE_MEM_WEIGHT, last_free_mem_weight); 
 
+#ifdef IS_GUI
   int version = 0;
+#endif
 
   while (running) {// server is working
     free_mem_g = (int)(get_free_mem() / ONE_MB);

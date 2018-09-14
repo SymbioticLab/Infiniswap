@@ -230,6 +230,7 @@ void mem_gather(char *rdma_buf, struct request *req)
 int IS_rdma_write(struct IS_connection *IS_conn, struct kernel_cb *cb, int cb_index, int chunk_index, struct remote_chunk_g *chunk, unsigned long offset, unsigned long len, struct request *req, struct IS_queue *q, struct timespec ts)
 #else
 int IS_rdma_write(struct IS_connection *IS_conn, struct kernel_cb *cb, int cb_index, int chunk_index, struct remote_chunk_g *chunk, unsigned long offset, unsigned long len, struct request *req, struct IS_queue *q)
+#endif
 {
 	int ret;
 	struct ib_send_wr *bad_wr;	
@@ -882,7 +883,7 @@ static int client_write_done(struct kernel_cb * cb, struct ib_wc *wc)
 {
 	struct rdma_ctx *ctx=NULL;
 	struct request *req=NULL;
-#ifdef
+#ifdef IS_GUI
 	struct timespec end_ts;
 #endif
 

@@ -6,7 +6,10 @@
 
 #include "rdma-common.h"
 
+#ifdef IS_GUI
 static int control_msg_listen();
+#endif 
+
 static int on_connect_request(struct rdma_cm_id *id);
 static int on_connection(struct rdma_cm_id *id);
 static int on_disconnect(struct rdma_cm_id *id);
@@ -45,7 +48,9 @@ int main(int argc, char **argv)
   //free
   running = 1;
   TEST_NZ(pthread_create(&free_mem_thread, NULL, (void *)free_mem, NULL));
+#ifdef IS_GUI
   pthread_create(&control_msg_listen_thread, NULL, (void *)control_msg_listen, NULL);
+#endif
 
   while (rdma_get_cm_event(ec, &event) == 0)
   {
@@ -65,6 +70,7 @@ int main(int argc, char **argv)
   return 0;
 }
 
+#ifdef IS_GUI
 int control_msg_listen()
 {
   int sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -110,6 +116,7 @@ int control_msg_listen()
 
   return sock;
 }
+#endif
 
 int on_connect_request(struct rdma_cm_id *id)
 {

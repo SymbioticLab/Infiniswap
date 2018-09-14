@@ -6,8 +6,6 @@
 #ifndef RDMA_COMMON_H
 #define RDMA_COMMON_H
 
-#define IS_GUI
-
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
