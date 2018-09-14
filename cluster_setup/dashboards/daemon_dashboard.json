@@ -1,0 +1,328 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "$$hashKey": "object:910",
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": 4,
+  "iteration": 1536888079611,
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "tags": [],
+      "type": "dashboards"
+    }
+  ],
+  "panels": [
+    {
+      "content": "<canvas id=\"myCanvas\">\r\n</canvas>\r\n<p id=\"chunk_info\"> </p>\r\n<form name=\"data\">\r\n    <input type=\"hidden\" name=\"mem_status\" value=$mem_status />\r\n    <input type=\"hidden\" name=\"chunk_mapping\" value=$chunk_mapping />\r\n    <input type=\"hidden\" name=\"device_ip\" value=$device_ip />\r\n</form>\r\n<script>\r\n\r\n    var mem_status = document.data.mem_status.value;\r\n    var chunk_mapping = document.data.chunk_mapping.value.substring(1, document.data.chunk_mapping.value.length - 1).split(',');\r\n\r\n\r\n    var mapped_chunks = new Object();\r\n \r\n    function read_mapping() {\r\n      \r\n         var chunk = -1;\r\n        var ip = \"\";\r\n        var lastpart = \"nothing\";\r\n        for (var part of chunk_mapping) {\r\n            if (part.length <= 2) {\r\n                if (lastpart.length <= 2) {\r\n                    mapped_chunks[lastpart] = ip;\r\n                }\r\n                chunk = part;\r\n            }\r\n            else {\r\n                ip = part;\r\n                mapped_chunks[chunk] = ip;\r\n            }\r\n            lastpart = part;\r\n        }\r\n        if (lastpart.length <= 2) {\r\n            mapped_chunks[lastpart] = ip;\r\n        }\r\n    }\r\n\r\n    read_mapping();\r\n\r\n    var num = 32;\r\n    var canvas = document.getElementById(\"myCanvas\");\r\n    canvas.width = window.innerWidth * 8.6 / 10;\r\n    canvas.height = window.innerWidth / 10;\r\n    var ctx = canvas.getContext(\"2d\");\r\n    var left = canvas.width / (num + 2);\r\n    var right = canvas.width * (num + 1) / (num + 2);\r\n    var blockwidth = canvas.width / num * 4 / 5;\r\n    var distance = canvas.width / (num + 2);\r\n    var blockheight = canvas.height / 4 * 3;\r\n    var graphtop = canvas.height / 8;\r\n    var fontsize = canvas.height / 8;\r\n    var lastShowBlock = 0;\r\n    var moving = false;\r\n\r\n    function drawMemBlock(i) {\r\n        if (i < 0) {\r\n            return;\r\n        }\r\n        var type = mem_status[i];\r\n        switch (type) {\r\n            case '0':\r\n                ctx.fillStyle = \"#EEEEEE\";\r\n                break;\r\n            case '1':\r\n                ctx.fillStyle = \"#00FFFF\";\r\n                break;\r\n            case '2':\r\n                ctx.fillStyle = \"#FF0000\";\r\n                break;\r\n        }\r\n        ctx.fillRect(left + distance * i, graphtop, blockwidth, blockheight);\r\n        \r\n        ctx.fillRect(left + distance * i, graphtop+blockheight*1.5, blockwidth, blockheight/2);\r\n    }\r\n    \r\n    function drawMemBlocks() {\r\n        num = mem_status.length;\r\n        for (var i = 0; i < num; i++) {\r\n            drawMemBlock(i);\r\n        }\r\n    }\r\n\r\n    drawMemBlocks();\r\n\r\n    setInterval(function () {\r\n        var new_mem_status = document.data.mem_status.value;\r\n        if (new_mem_status !== mem_status) {\r\n            mem_status = new_mem_status;\r\n            drawMemBlocks();\r\n            read_mapping();\r\n        }\r\n    }, 5000);\r\n    \r\n    // initialize array\r\n    var check = [];\r\n    for (var i = 1; i <= num; i++) {\r\n        check.push(false);\r\n    }\r\n\r\n    canvas.onmousemove = function (e) {\r\n        if (moving) {\r\n            return;\r\n        }\r\n        moving = true;\r\n        var rect = this.getBoundingClientRect();\r\n        var canvasPoint = {\r\n            x: e.clientX - rect.left,\r\n            y: e.clientY - rect.top\r\n        };\r\n\r\n        var inblock = false;\r\n        for (var i = 1; i <= num; i++) {\r\n            if (canvasPoint.x > left + (i - 1) * distance && canvasPoint.x < left + (i - 1) * distance + blockwidth && canvasPoint.y > graphtop && canvasPoint.y < graphtop + blockheight) {\r\n                if (i !== lastShowBlock) {\r\n                    ctx.textAlign = \"center\";\r\n                    ctx.font = fontsize + \"px Arial\";\r\n                    ctx.fillStyle = \"#000000\";\r\n                    ctx.fillText(i.toString(), left + (i - 1) * distance + 0.5 * blockwidth, graphtop + 0.6 * blockheight);\r\n                    drawMemBlock(lastShowBlock - 1);\r\n                    lastShowBlock = i;\r\n                   canvas.addEventListener('click', function (event) {\r\n                        console.log(lastShowBlock);\r\n                        console.log(\"check\", check[lastShowBlock-1]);\r\n                        if (check[lastShowBlock - 1] === false) {\r\n                            check[lastShowBlock - 1] = true;\r\n                            var windowObjectReference;\r\n                            var strWindowFeatures = \"menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes\";\r\n                            var message = \"send a websocket to infiniswap, daemon \";\r\n                            var chunk = lastShowBlock;\r\n                            message += chunk.toString();\r\n                            alert(message);\r\n                            var device_ip = document.data.device_ip.value;\r\n                            var url = \"http://128.110.96.133:4000/evt/\";\r\n                            url = url + device_ip.toString();\r\n                            url = url + \"/\";\r\n                            url = url + chunk.toString();\r\n                            console.log(\"url\",url);\r\n                            \r\n                            var request = new XMLHttpRequest();\r\n                            request.open('GET', url);\r\n                            request.setRequestHeader('Access-Control-Allow-Credentials', 'true');\r\n                            request.send();\r\n                        }\r\n                    }, false);\r\n\r\n                    switch (mem_status[i - 1]) {\r\n                        case '0':\r\n                            document.getElementById('chunk_info').innerHTML = \"This chunk is either free or used by local program.\";\r\n                            break;\r\n                        case '1':\r\n                            document.getElementById('chunk_info').innerHTML = \"This chunk is allocated but not used.\";\r\n                            break;\r\n                        case '2':\r\n                            document.getElementById('chunk_info').innerHTML = \"This chunk is being used by device: \" + mapped_chunks[i];\r\n                            break;\r\n                    }\r\n                }\r\n                inblock = true;\r\n            }\r\n        }\r\n        if (!inblock) {\r\n            drawMemBlock(lastShowBlock - 1);\r\n            lastShowBlock = 0;\r\n            document.getElementById('chunk_info').innerHTML = \"\";\r\n        }\r\n        moving = false;\r\n    };\r\n    \r\n    canvas.addEventListener('click', function(e) { \r\n      if (moving) {\r\n            return;\r\n        }\r\n        moving = true;\r\n        var rect = this.getBoundingClientRect();\r\n        var canvasPoint = {\r\n            x: e.clientX - rect.left,\r\n            y: e.clientY - rect.top\r\n        };\r\n\r\n        var inblock = false;\r\n        for (var i = 1; i <= num; i++) {\r\n            if (canvasPoint.x > left + (i - 1) * distance && canvasPoint.x < left + (i - 1) * distance + blockwidth && canvasPoint.y > graphtop && canvasPoint.y < graphtop + blockheight) {\r\n                if (i !== lastShowBlock) {\r\n                    ctx.textAlign = \"center\";\r\n                    ctx.font = fontsize + \"px Arial\";\r\n                    ctx.fillStyle = \"#000000\";\r\n                    ctx.fillText(i.toString(), left + (i - 1) * distance + 0.5 * blockwidth, graphtop + 0.6 * blockheight);\r\n                    drawMemBlock(lastShowBlock - 1);\r\n                    lastShowBlock = i;\r\n                    var windowObjectReference;\r\n                    var strWindowFeatures = \"menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes\";\r\n                    alert(\"send a web socket to infiniswap\");\r\n\r\n                    switch (mem_status[i - 1]) {\r\n                        case '0':\r\n                            document.getElementById('chunk_info').innerHTML = \"This chunk is either free or used by local program.\";\r\n                            break;\r\n                        case '1':\r\n                            document.getElementById('chunk_info').innerHTML = \"This chunk is allocated but not used.\";\r\n                            break;\r\n                        case '2':\r\n                            document.getElementById('chunk_info').innerHTML = \"This chunk is being used by device: \" + mapped_chunks[i] + \", chunk: 0.\";\r\n                            break;\r\n                    }\r\n                }\r\n                inblock = true;\r\n            }\r\n        }\r\n        if (!inblock) {\r\n            drawMemBlock(lastShowBlock - 1);\r\n            lastShowBlock = 0;\r\n            document.getElementById('chunk_info').innerHTML = \"\";\r\n        }\r\n        moving = false;\r\n      \r\n    }, false);\r\n\r\n    window.onresize = function(event) {\r\n        \r\n    };\r\n</script>",
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 4,
+      "links": [],
+      "mode": "html",
+      "title": "Slab Usage",
+      "type": "text"
+    },
+    {
+      "aliasColors": {},
+      "breakPoint": "50%",
+      "cacheTimeout": null,
+      "combine": {
+        "label": "Others",
+        "threshold": 0
+      },
+      "datasource": "Infiniswap",
+      "fontSize": "80%",
+      "format": "short",
+      "gridPos": {
+        "h": 10,
+        "w": 9,
+        "x": 0,
+        "y": 7
+      },
+      "id": 2,
+      "interval": null,
+      "legend": {
+        "show": true,
+        "values": true
+      },
+      "legendType": "Under graph",
+      "links": [],
+      "maxDataPoints": 3,
+      "nullPointMode": "connected",
+      "pieType": "pie",
+      "strokeWidth": 1,
+      "targets": [
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "SELECT\n  UNIX_TIMESTAMP(time) as time_sec,\n  RAM_free as value,\n  \"free\" as metric\nFROM daemon\nWHERE $__timeFilter(time) and dev_ip = '$device_ip'\nORDER BY time ASC\n",
+          "refId": "A"
+        },
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "SELECT\n  UNIX_TIMESTAMP(time) as time_sec,\n  RAM_mapped as value,\n  \"used\" as metric\nFROM daemon\nWHERE $__timeFilter(time) and dev_ip = '$device_ip'\nORDER BY time ASC\n",
+          "refId": "B"
+        },
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "SELECT\n  UNIX_TIMESTAMP(time) as time_sec,\n  RAM_allocated as value,\n  \"allocated but not used\" as metric\nFROM daemon\nWHERE $__timeFilter(time) and dev_ip = '$device_ip'\nORDER BY time ASC",
+          "refId": "C"
+        }
+      ],
+      "title": "Slab Usage Pie Chart",
+      "type": "grafana-piechart-panel",
+      "valueName": "current"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Infiniswap",
+      "fill": 1,
+      "gridPos": {
+        "h": 10,
+        "w": 15,
+        "x": 9,
+        "y": 7
+      },
+      "id": 6,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "SELECT\n  UNIX_TIMESTAMP(time) as time_sec,\n  (RAM_free + RAM_allocated + RAM_mapped) as value,\n  \"total\" as metric\nFROM daemon\nWHERE $__timeFilter(time) and dev_ip = '$device_ip'\nORDER BY time ASC",
+          "refId": "A"
+        },
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "SELECT\n  UNIX_TIMESTAMP(time) as time_sec,\n  (RAM_allocated + RAM_mapped) as value,\n  \"allocated\" as metric\nFROM daemon\nWHERE $__timeFilter(time) and dev_ip = '$device_ip'\nORDER BY time ASC\n",
+          "refId": "B"
+        },
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "SELECT\n  UNIX_TIMESTAMP(time) as time_sec,\n  RAM_mapped as value,\n  \"mapped\" as metric\nFROM daemon\nWHERE $__timeFilter(time) and dev_ip = '$device_ip'\nORDER BY time ASC\n",
+          "refId": "C"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Slab Usage History",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 16,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "allValue": null,
+        "current": {
+          "isNone": true,
+          "text": "None",
+          "value": ""
+        },
+        "datasource": "Infiniswap",
+        "hide": 0,
+        "includeAll": false,
+        "label": null,
+        "multi": false,
+        "name": "device_ip",
+        "options": [],
+        "query": "select dev_ip from (select * from daemon order by time desc) as t group by t.dev_ip limit $daemon_num;",
+        "refresh": 2,
+        "regex": "",
+        "sort": 1,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {
+          "isNone": true,
+          "text": "None",
+          "value": ""
+        },
+        "datasource": "Infiniswap",
+        "hide": 2,
+        "includeAll": false,
+        "label": null,
+        "multi": false,
+        "name": "mem_status",
+        "options": [],
+        "query": "select mem_status from daemon_mem where dev_ip = \"$device_ip\" order by time desc limit 1 ",
+        "refresh": 2,
+        "regex": "",
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {
+          "text": "0",
+          "value": "0"
+        },
+        "datasource": "Infiniswap",
+        "hide": 2,
+        "includeAll": false,
+        "label": null,
+        "multi": false,
+        "name": "daemon_num",
+        "options": [],
+        "query": "select daemon_num from general_info order by time desc limit 1;",
+        "refresh": 2,
+        "regex": "",
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "Infiniswap",
+        "hide": 2,
+        "includeAll": true,
+        "label": null,
+        "multi": false,
+        "name": "chunk_mapping",
+        "options": [],
+        "query": "SELECT local_chunk, remote_ip FROM daemon_mapping where dev_ip = \"$device_ip\" order by local_chunk ",
+        "refresh": 2,
+        "regex": "",
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      }
+    ]
+  },
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+  },
+  "timezone": "",
+  "title": "daemon",
+  "uid": "ztudW-Iiz",
+  "version": 1
+}

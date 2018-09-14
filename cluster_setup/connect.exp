@@ -1,0 +1,52 @@
+#!/usr/bin/expect
+# usage: ./connect.exp [host_ip] [local_ip] [cmd] [mode/port] ([server_public_ip])
+set host_ip [lindex $argv 0]
+set local_ip [lindex $argv 1]
+set cmd [lindex $argv 2]
+
+# ssh user
+set user "songyuan"
+# ssh password
+set password "whlgrz\n\r"
+# the directory to setup infiniswap
+set dir "/users/songyuan" 
+set shell_dir "${dir}/infiniswap/cluster_setup/individual_shell"
+
+set host "${user}@${host_ip}"
+
+if { $cmd == "GUI" } {
+    set mode [lindex $argv 3] 
+    set hostport "12135"
+    set clientport "12136"
+    set server_public_ip [lindex $argv 4]
+    spawn ssh -p 22 $host "chmod +x setupGUI.sh ; sudo ${shell_dir}/setupGUI.sh $mode $local_ip $hostport $clientport $dir $server_public_ip"
+    expect "passphrase"
+    send $password
+    interact
+} elseif { $cmd == "DM" } {
+    set port [lindex $argv 3]
+    set mode [lindex $argv 4]
+    spawn ssh -p 22 $host "chmod +x setupDaemon.sh ; sudo ${shell_dir}/setupDaemon.sh $local_ip $port $dir $mode"
+    expect "passphrase"
+    send $password
+    interact
+} elseif { $cmd == "BD" } {
+    spawn ssh -p 22 $host "chmod +x setupBD.sh ; sudo ${shell_dir}/setupBD.sh $dir"
+    expect "passphrase"
+    send $password
+    interact 
+} elseif { $cmd == "ST" } {
+    spawn ssh -p 22 $host "chmod +x stop.sh ; sudo ${shell_dir}/stop.sh $dir" 
+    expect "passphrase"
+    send $password
+    interact
+} elseif { $cmd == "IN" } {
+    # install
+    spawn ssh -p 22 $host "chmod +x install.sh ; sudo ${shell_dir}/install.sh $dir" 
+    expect {
+            "yes/no"   { send "yes\n\r";exp_continue }
+            "passphrase" { send "$password"}
+    }
+    send $password
+    interact
+}

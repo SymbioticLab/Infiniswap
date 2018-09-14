@@ -1,0 +1,1184 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "$$hashKey": "object:183",
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": 1,
+  "iteration": 1536888008614,
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "tags": [],
+      "title": "Detail Page",
+      "type": "dashboards"
+    }
+  ],
+  "panels": [
+    {
+      "content": "<canvas id=\"myCanvas\">\r\n</canvas>\r\n<form name=\"data\">\r\n    <input type=\"hidden\" name=\"device_num\" value=$device_num />\r\n    <input type=\"hidden\" name=\"daemon_num\" value=$daemon_num />\r\n    <input type=\"hidden\" name=\"bd_num\" value=$bd_num />\r\n    <input type=\"hidden\" name=\"daemon_ip\" value=$daemon_ip />\r\n    <input type=\"hidden\" name=\"bd_ip\" value=$bd_ip />\r\n    <input type=\"hidden\" name=\"daemon_free\" value=$daemon_free />\r\n    <input type=\"hidden\" name=\"daemon_allocated\" value=$daemon_allocated />\r\n    <input type=\"hidden\" name=\"daemon_mapped\" value=$daemon_mapped />\r\n    <input type=\"hidden\" name=\"bd_pagein_throughput\" value=$bd_pagein_throughput />\r\n    <input type=\"hidden\" name=\"bd_pageout_throughput\" value=$bd_pageout_throughput />\r\n    <input type=\"hidden\" name=\"bd_pagein_latency\" value=$bd_pagein_latency />\r\n    <input type=\"hidden\" name=\"bd_pageout_latency\" value=$bd_pageout_latency />\r\n    <input type=\"hidden\" name=\"bd_mapping\" value=$bd_mapping />\r\n</form>\r\n<!--\r\n<button class=\"btn btn-success\" id=\"st_dae\"> START A DAEMON </button>\r\n  <button class=\"btn btn-success\" id=\"kl_dae\"> KILL A DAEMON </button>\r\n-->\r\n<script>\r\n    var num = 0;\r\n    var dev_ips = [];\r\n    var daemon_ips = \"\";\r\n    var bd_ips = \"\";\r\n    var daemon_set, bd_set;\r\n    var daemon_map, bd_map;\r\n\r\n    var canvas = document.getElementById(\"myCanvas\");\r\n    canvas.width = window.innerWidth * 0.9;\r\n    canvas.height = canvas.width / 10;\r\n    var ctx = canvas.getContext(\"2d\");\r\n    var left = canvas.width / 9;\r\n    var right = canvas.width * 8 / 9;\r\n    var blockwidth = canvas.width / 5;\r\n    var blockheight, fontsize;\r\n   /* \r\n    var bt1 = document.getElementById(\"st_dae\");\r\n    var bt2 = document.getElementById(\"kl_dae\");\r\n    \r\n    bt1.addEventListener('click', function(event) {\r\n        var url = \"http://128.110.96.133:4000/st/dm\";\r\n        alert(\"start a daemon\");\r\n        var xmlHttp = new XMLHttpRequest();\r\n        xmlHttp.open( \"GET\", url); // false for synchronous request\r\n        xmlHttp.send();\r\n    }, false);\r\n    \r\n    bt2.addEventListener('click', function(event) {\r\n        var url = \"http://128.110.96.133:4000/kl/dm\";\r\n        alert(\"kill daemon\");\r\n        var xmlHttp = new XMLHttpRequest();\r\n        xmlHttp.open( \"GET\", url, false ); // false for synchronous request\r\n        xmlHttp.send( null );\r\n    }, false);\r\n   */\r\n\r\n    function adjust_graph_height() {\r\n        canvas.height = canvas.width / 15 * (2 * Math.pow(num, 2/3) + 1);\r\n        blockheight = canvas.height / (2 * num + 1);\r\n        fontsize = blockheight / 3;\r\n    }\r\n\r\n    function update_devices() {\r\n        var new_num = document.data.device_num.value;\r\n        var new_daemon_ips = \"\";\r\n        if (document.data.daemon_num.value > 0) {\r\n            new_daemon_ips = document.data.daemon_ip.value;\r\n        }\r\n        var new_bd_ips = \"\";\r\n        if (document.data.bd_num.value > 0) {\r\n            new_bd_ips = document.data.bd_ip.value;\r\n        }\r\n\r\n        // update if device status changes \r\n        if (new_num !== num || new_daemon_ips !== daemon_ips || new_bd_ips !== bd_ips) {\r\n            if (new_num !== num) {\r\n                num = new_num;\r\n                adjust_graph_height();\r\n            }\r\n            daemon_ips = new_daemon_ips;\r\n            bd_ips = new_bd_ips;\r\n            daemon_set = new Set();\r\n            bd_set = new Set();\r\n            if (daemon_ips !== \"\") {\r\n                daemon_set = new Set(daemon_ips.substring(1, daemon_ips.length - 1).split(','));\r\n            }\r\n            if (bd_ips !== \"\") {\r\n                bd_set = new Set(bd_ips.substring(1, bd_ips.length - 1).split(','));\r\n            }\r\n\r\n            daemon_map = new Map();\r\n            bd_map = new Map();\r\n\r\n\r\n            //get the union of bd and daemon\r\n            var dev_ip_set = new Set();\r\n            for (var daemon_ip of daemon_set) {\r\n                dev_ip_set.add(daemon_ip);\r\n            }\r\n            for (var bd_ip of bd_set) {\r\n                dev_ip_set.add(bd_ip);\r\n            }\r\n            dev_ips = Array.from(dev_ip_set);\r\n            dev_ips.sort();\r\n\r\n        }\r\n\r\n        // map each daemon with the recording memory status\r\n        if (daemon_ips !== \"\") {\r\n            daemon_list = daemon_ips.substring(1, daemon_ips.length - 1).split(',');\r\n            free_list = document.data.daemon_free.value.substring(1, document.data.daemon_free.value.length - 1).split(',');\r\n            allocated_list = document.data.daemon_allocated.value.substring(1, document.data.daemon_allocated.value.length - 1).split(',');\r\n            mapped_list = document.data.daemon_mapped.value.substring(1, document.data.daemon_mapped.value.length - 1).split(',');\r\n            for (var i = 0; i < daemon_list.length; i++) {\r\n                daemon_map.set(daemon_list[i], { free: free_list[i].split(';')[1], allocated: allocated_list[i].split(';')[1], mapped: mapped_list[i].split(';')[1] });\r\n            }\r\n        }\r\n\r\n        if (bd_ips !== \"\") {\r\n            bd_list = bd_ips.substring(1, bd_ips.length - 1).split(',');\r\n            pagein_throughput_list = document.data.bd_pagein_throughput.value.substring(1, document.data.bd_pagein_throughput.value.length - 1).split(',');\r\n            pageout_throughput_list = document.data.bd_pageout_throughput.value.substring(1, document.data.bd_pageout_throughput.value.length - 1).split(',');\r\n            pagein_latency_list = document.data.bd_pagein_latency.value.substring(1, document.data.bd_pagein_latency.value.length - 1).split(',');\r\n            pageout_latency_list = document.data.bd_pageout_latency.value.substring(1, document.data.bd_pageout_latency.value.length - 1).split(',');\r\n            for (var i = 0; i < bd_list.length; i++) {\r\n                bd_map.set(bd_list[i], {\r\n                    pagein_throughput: pagein_throughput_list[i].split(';')[1],\r\n                    pageout_throughput: pageout_throughput_list[i].split(';')[1],\r\n                    pagein_latency: pagein_latency_list[i].split(';')[1],\r\n                    pageout_latency: pageout_latency_list[i].split(';')[1]\r\n                });\r\n            }\r\n        }\r\n\r\n        render();\r\n    }\r\n\r\n    setInterval(update_devices(), 5000);\r\n\r\n    function draw_bd_block(i) {\r\n        if (bd_set.has(dev_ips[i])) {\r\n            ctx.fillStyle = \"brown\";\r\n            ctx.font = (fontsize / 2) + \"px Arial\";\r\n            ctx.fillRect(left, blockheight * (2 * i + 1), blockwidth, blockheight);\r\n            ctx.fillStyle = \"blue\";\r\n            ctx.fillText(\"throughput: \" + bd_map.get(dev_ips[i]).pagein_throughput + \"/\" + bd_map.get(dev_ips[i]).pageout_throughput,\r\n                left + blockwidth / 2, blockheight * (2 * i + 1) + fontsize / 2);\r\n            ctx.fillText(\"latency: \" + bd_map.get(dev_ips[i]).pagein_latency + \"/\" + bd_map.get(dev_ips[i]).pageout_latency,\r\n                left + blockwidth / 2, blockheight * (2 * i + 2) - fontsize / 4);\r\n        }\r\n        else {\r\n            ctx.fillStyle = \"#666666\";\r\n            ctx.fillRect(left, blockheight * (2 * i + 1), blockwidth, blockheight);\r\n        }\r\n\r\n        ctx.fillStyle = \"#000000\";\r\n        ctx.textAlign = \"center\";\r\n        ctx.font = fontsize + \"px Arial\";\r\n        ctx.fillText(dev_ips[i], left + blockwidth / 2, blockheight * (2 * i + 1) + blockheight / 2 + fontsize / 3);\r\n    }\r\n\r\n    function draw_daemon_block(i) {\r\n        if (daemon_set.has(dev_ips[i])) {\r\n            var free = parseInt(daemon_map.get(dev_ips[i]).free);\r\n            var allocated = parseInt(daemon_map.get(dev_ips[i]).allocated);\r\n            var mapped = parseInt(daemon_map.get(dev_ips[i]).mapped);\r\n            var total_mem = free + allocated + mapped;\r\n            ctx.fillStyle = \"green\";\r\n            ctx.fillRect(right - blockwidth, blockheight * (2 * i + 1), blockwidth, blockheight);\r\n            ctx.fillStyle = \"yellow\";\r\n            ctx.fillRect(right - blockwidth, blockheight * (2 * i + 1), blockwidth * (allocated + mapped) / total_mem, blockheight);\r\n            ctx.fillStyle = \"orange\";\r\n            ctx.fillRect(right - blockwidth, blockheight * (2 * i + 1), blockwidth * mapped / total_mem, blockheight);\r\n        }\r\n        else {\r\n            ctx.fillStyle = \"#666666\";\r\n            ctx.fillRect(right - blockwidth, blockheight * (2 * i + 1), blockwidth, blockheight);\r\n        }\r\n\r\n        ctx.fillStyle = \"#000000\";\r\n        ctx.textAlign = \"center\";\r\n        ctx.font = fontsize + \"px Arial\";\r\n        ctx.fillText(dev_ips[i], right - blockwidth / 2, blockheight * (2 * i + 1) + blockheight / 2 + fontsize / 3);\r\n    }\r\n\r\n    function link(i, j, throughput, latency) {\r\n        ctx.beginPath();\r\n        ctx.moveTo(left + blockwidth, blockheight * (2 * i + 1) + blockheight / 2);\r\n        var lineWidth = 0;\r\n        //var throughput = 0;\r\n        //var latency = 0;\r\n        /*\r\n        if (bd_set.has(dev_ips[i])) {\r\n            throughput = bd_map.get(dev_ips[i]).pagein_throughput + bd_map.get(dev_ips[i]).pageout_throughput;\r\n            latency = bd_map.get(dev_ips[i]).pagein_latency + bd_map.get(dev_ips[i]).pageout_latency; \r\n            if (bd_map.get(dev_ips[i]).pagein_latency !== 0 && bd_map.get(dev_ips[i]).pageout_latency !== 0){\r\n                latency /= 2;\r\n            }\r\n        }\r\n        */\r\n        if (throughput < 100) {\r\n            lineWidth = 2;\r\n        }\r\n        else if (throughput >= 100 && throughput < 500) {\r\n            lineWidth = 5;\r\n        }\r\n        else if (throughput >= 500 && throughput < 3000) {\r\n            lineWidth = 8;\r\n        }\r\n        else {\r\n            lineWidth = 10;\r\n        }\r\n        \r\n        var style = \"\";\r\n        if (latency < 10) {\r\n            style = \"green\";\r\n        }\r\n        else if (latency >= 10 && latency < 30) {\r\n            style = \"yellow\";\r\n        }\r\n        else if (latency > 30 && latency < 100) {\r\n            style = \"orange\"\r\n        }\r\n        else {\r\n            style = \"red\";\r\n        }\r\n        ctx.strokeStyle = style;\r\n        ctx.lineWidth = lineWidth;\r\n        ctx.lineTo(right - blockwidth, blockheight * (2 * j + 1) + blockheight / 2);\r\n        ctx.stroke();\r\n    }\r\n\r\n    function render() {\r\n        ctx.fillStyle = \"#FF0000\";\r\n        ctx.textAlign = \"center\";\r\n        ctx.font = fontsize + \"px Arial\";\r\n        ctx.fillText(\"BD\", left + blockwidth / 2, blockheight / 2 + fontsize / 2);\r\n        ctx.fillStyle = \"#FFFF00\";\r\n        ctx.fillText(\"DAEMON\", right - blockwidth / 2, blockheight / 2 + fontsize / 2);\r\n        for (var i = 0; i < num; i++) {\r\n            draw_bd_block(i);\r\n            draw_daemon_block(i);\r\n        }\r\n\r\n        var mapping_list = document.data.bd_mapping.value.substring(1, document.data.bd_mapping.value.length - 1).split(','); \r\n        for (var map_relation of mapping_list){\r\n            var map_info = map_relation.split(';');\r\n            link(dev_ips.indexOf(map_info[0]), dev_ips.indexOf(map_info[1]), map_info[2] + map_info[3], (map_info[4] + map_info[5]) / 2);\r\n        }\r\n        ctx.textAlign = \"center\";\r\n        ctx.font = blockwidth / 27 + \"px Arial\";\r\n        ctx.fillStyle = \"orange\";\r\n        ctx.fillRect(right - blockwidth, blockheight * (2 * num) + blockheight / 3, blockwidth / 12, blockheight / 3);\r\n        ctx.fillText(\"MAPPED\", right - blockwidth + blockwidth * 5 / 24, blockheight * (2 * num) + blockheight * 4 / 7);\r\n        ctx.fillStyle = \"yellow\";\r\n        ctx.fillRect(right - blockwidth + blockwidth / 3, blockheight * (2 * num) + blockheight / 3, blockwidth / 12, blockheight / 3);\r\n        ctx.fillText(\"ALLOCATED\", right - blockwidth + blockwidth * 13 / 24, blockheight * (2 * num) + blockheight * 4 / 7);\r\n        ctx.fillStyle = \"green\";\r\n        ctx.fillRect(right - blockwidth + blockwidth * 2 / 3, blockheight * (2 * num) + blockheight / 3, blockwidth / 12, blockheight / 3);\r\n        ctx.fillText(\"LOCAL\", right - blockwidth + blockwidth * 21 / 24, blockheight * (2 * num) + blockheight * 4 / 7);\r\n\r\n    }\r\n\r\n    render();\r\n</script>",
+      "gridPos": {
+        "h": 16,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 14,
+      "links": [],
+      "mode": "html",
+      "title": "",
+      "type": "text"
+    },
+    {
+      "cacheTimeout": null,
+      "colorBackground": false,
+      "colorValue": true,
+      "colors": [
+        "#299c46",
+        "rgba(237, 129, 40, 0.89)",
+        "#d44a3a"
+      ],
+      "datasource": "Infiniswap",
+      "format": "none",
+      "gauge": {
+        "maxValue": 100,
+        "minValue": 0,
+        "show": false,
+        "thresholdLabels": false,
+        "thresholdMarkers": true
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 4,
+        "x": 0,
+        "y": 16
+      },
+      "id": 1,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "nullPointMode": "connected",
+      "nullText": null,
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "sparkline": {
+        "fillColor": "rgba(31, 118, 189, 0.18)",
+        "full": true,
+        "lineColor": "rgb(31, 120, 193)",
+        "show": true
+      },
+      "tableColumn": "time_sec",
+      "targets": [
+        {
+          "alias": "",
+          "format": "time_series",
+          "hide": false,
+          "rawSql": "SELECT\n  UNIX_TIMESTAMP(time) as time_sec,\n  device_num as value,\n  \"number of device\" as metric\nFROM general_info\nWHERE $__timeFilter(time)\n",
+          "refId": "A"
+        },
+        {
+          "alias": "",
+          "format": "time_series",
+          "hide": true,
+          "rawSql": "SELECT\n  UNIX_TIMESTAMP(time) as time_sec,\n  daemon_num as value,\n  \"number of daemon\" as metric\nFROM general_info\nWHERE $__timeFilter(time)\n",
+          "refId": "B"
+        }
+      ],
+      "thresholds": "3,5",
+      "title": "Number of Devices",
+      "type": "singlestat",
+      "valueFontSize": "110%",
+      "valueMaps": [
+        {
+          "op": "=",
+          "text": "N/A",
+          "value": "null"
+        }
+      ],
+      "valueName": "current"
+    },
+    {
+      "cacheTimeout": null,
+      "colorBackground": false,
+      "colorValue": true,
+      "colors": [
+        "#299c46",
+        "rgba(237, 129, 40, 0.89)",
+        "#d44a3a"
+      ],
+      "datasource": "Infiniswap",
+      "format": "none",
+      "gauge": {
+        "maxValue": 100,
+        "minValue": 0,
+        "show": false,
+        "thresholdLabels": false,
+        "thresholdMarkers": true
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 16
+      },
+      "id": 9,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "nullPointMode": "connected",
+      "nullText": null,
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "sparkline": {
+        "fillColor": "rgba(31, 118, 189, 0.18)",
+        "full": true,
+        "lineColor": "rgb(31, 120, 193)",
+        "show": true
+      },
+      "tableColumn": "time_sec",
+      "targets": [
+        {
+          "alias": "",
+          "format": "time_series",
+          "hide": false,
+          "rawSql": "SELECT\n  UNIX_TIMESTAMP(time) as time_sec,\n  bd_num as value,\n  \"number of block device\" as metric\nFROM general_info\nWHERE $__timeFilter(time)\n",
+          "refId": "B"
+        }
+      ],
+      "thresholds": "3,5",
+      "title": "Number of Block Device",
+      "type": "singlestat",
+      "valueFontSize": "110%",
+      "valueMaps": [
+        {
+          "op": "=",
+          "text": "N/A",
+          "value": "null"
+        }
+      ],
+      "valueName": "current"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Infiniswap",
+      "fill": 1,
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 16
+      },
+      "id": 3,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "SELECT\n  UNIX_TIMESTAMP(time) as time_sec,\n  pagein_throughput as value,\n  \"page in throughput\" as metric\nFROM general_info\nWHERE $__timeFilter(time)\nORDER BY time ASC\n",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Page In Throughput (per second)",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Infiniswap",
+      "fill": 1,
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 16
+      },
+      "id": 4,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "SELECT\n  UNIX_TIMESTAMP(time) as time_sec,\n  pageout_throughput as value,\n  \"page out throughput\" as metric\nFROM general_info\nWHERE $__timeFilter(time)\nORDER BY time ASC\n",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Page Out Throughput (per second)",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "cacheTimeout": null,
+      "colorBackground": false,
+      "colorValue": true,
+      "colors": [
+        "#299c46",
+        "rgba(237, 129, 40, 0.89)",
+        "#d44a3a"
+      ],
+      "datasource": "Infiniswap",
+      "format": "none",
+      "gauge": {
+        "maxValue": 100,
+        "minValue": 0,
+        "show": false,
+        "thresholdLabels": false,
+        "thresholdMarkers": true
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 20
+      },
+      "id": 10,
+      "interval": null,
+      "links": [],
+      "mappingType": 1,
+      "mappingTypes": [
+        {
+          "name": "value to text",
+          "value": 1
+        },
+        {
+          "name": "range to text",
+          "value": 2
+        }
+      ],
+      "maxDataPoints": 100,
+      "nullPointMode": "connected",
+      "nullText": null,
+      "postfix": "",
+      "postfixFontSize": "50%",
+      "prefix": "",
+      "prefixFontSize": "50%",
+      "rangeMaps": [
+        {
+          "from": "null",
+          "text": "N/A",
+          "to": "null"
+        }
+      ],
+      "sparkline": {
+        "fillColor": "rgba(31, 118, 189, 0.18)",
+        "full": true,
+        "lineColor": "rgb(31, 120, 193)",
+        "show": true
+      },
+      "tableColumn": "time_sec",
+      "targets": [
+        {
+          "alias": "",
+          "format": "time_series",
+          "hide": false,
+          "rawSql": "SELECT\n  UNIX_TIMESTAMP(time) as time_sec,\n  daemon_num as value,\n  \"number of daemon\" as metric\nFROM general_info\nWHERE $__timeFilter(time)\n",
+          "refId": "B"
+        }
+      ],
+      "thresholds": "3,5",
+      "title": "Number of Daemon",
+      "type": "singlestat",
+      "valueFontSize": "110%",
+      "valueMaps": [
+        {
+          "op": "=",
+          "text": "N/A",
+          "value": "null"
+        }
+      ],
+      "valueName": "current"
+    },
+    {
+      "aliasColors": {},
+      "breakPoint": "50%",
+      "cacheTimeout": null,
+      "combine": {
+        "label": "Others",
+        "threshold": 0
+      },
+      "datasource": "Infiniswap",
+      "fontSize": "80%",
+      "format": "short",
+      "gridPos": {
+        "h": 8,
+        "w": 4,
+        "x": 0,
+        "y": 24
+      },
+      "id": 2,
+      "interval": null,
+      "legend": {
+        "show": true,
+        "sort": "current",
+        "sortDesc": false,
+        "values": true
+      },
+      "legendType": "Under graph",
+      "links": [],
+      "maxDataPoints": 3,
+      "nullPointMode": "connected",
+      "pieType": "pie",
+      "strokeWidth": 1,
+      "targets": [
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "SELECT\n  UNIX_TIMESTAMP(time) as time_sec,\n  RAM_free as value,\n  \"free\" as metric\nFROM general_info\nWHERE $__timeFilter(time)\nORDER BY time ASC\n\n",
+          "refId": "A"
+        },
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "SELECT\n  UNIX_TIMESTAMP(time) as time_sec,\n  RAM_mapped as value,\n  \"used\" as metric\nFROM general_info\nWHERE $__timeFilter(time)\nORDER BY time ASC\n",
+          "refId": "B"
+        },
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "SELECT\n  UNIX_TIMESTAMP(time) as time_sec,\n  RAM_allocated as value,\n  \"allocated but not used\" as metric\nFROM general_info\nWHERE $__timeFilter(time)\nORDER BY time ASC\n",
+          "refId": "C"
+        }
+      ],
+      "title": "Memory Usage",
+      "type": "grafana-piechart-panel",
+      "valueName": "current"
+    },
+    {
+      "aliasColors": {},
+      "breakPoint": "50%",
+      "cacheTimeout": null,
+      "combine": {
+        "label": "Others",
+        "threshold": 0
+      },
+      "datasource": "Infiniswap",
+      "fontSize": "80%",
+      "format": "short",
+      "gridPos": {
+        "h": 8,
+        "w": 4,
+        "x": 4,
+        "y": 24
+      },
+      "id": 12,
+      "interval": null,
+      "legend": {
+        "show": true,
+        "sort": "current",
+        "sortDesc": false,
+        "values": true
+      },
+      "legendType": "Under graph",
+      "links": [],
+      "maxDataPoints": 3,
+      "nullPointMode": "connected",
+      "pieType": "pie",
+      "strokeWidth": 1,
+      "targets": [
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "SELECT\n  UNIX_TIMESTAMP(time) as time_sec,\n  (total_IO-remote_IO) as value,\n  \"local_IO\" as metric\nFROM general_info\nWHERE $__timeFilter(time)\nORDER BY time ASC\n\n",
+          "refId": "A"
+        },
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "SELECT\n  UNIX_TIMESTAMP(time) as time_sec,\n  remote_IO as value,\n  \"remote_IO\" as metric\nFROM general_info\nWHERE $__timeFilter(time)\nORDER BY time ASC\n",
+          "refId": "B"
+        }
+      ],
+      "title": "IO Partition",
+      "type": "grafana-piechart-panel",
+      "valueName": "current"
+    },
+    {
+      "aliasColors": {
+        "page in latency": "#c15c17"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Infiniswap",
+      "fill": 1,
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 24
+      },
+      "id": 5,
+      "legend": {
+        "avg": false,
+        "current": true,
+        "max": true,
+        "min": true,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "SELECT\n  UNIX_TIMESTAMP(time) as time_sec,\n  pagein_latency as value,\n  \"page in latency\" as metric\nFROM general_info\nWHERE $__timeFilter(time)\nORDER BY time ASC",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Page In Latency (microsecond)",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {
+        "page out latency": "#c15c17"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Infiniswap",
+      "fill": 1,
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 24
+      },
+      "id": 6,
+      "legend": {
+        "avg": false,
+        "current": true,
+        "max": true,
+        "min": true,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "SELECT\n  UNIX_TIMESTAMP(time) as time_sec,\n  pageout_latency as value,\n  \"page out latency\" as metric\nFROM general_info\nWHERE $__timeFilter(time)\nORDER BY time ASC",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Page Out Latency (microsecond)",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "columns": [],
+      "datasource": "Infiniswap",
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 32
+      },
+      "id": 7,
+      "links": [],
+      "pageSize": null,
+      "scroll": true,
+      "showHeader": true,
+      "sort": {
+        "col": 0,
+        "desc": true
+      },
+      "styles": [
+        {
+          "alias": "Time",
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "pattern": "Time",
+          "type": "date"
+        },
+        {
+          "alias": "",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "decimals": 2,
+          "pattern": "/.*/",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        }
+      ],
+      "targets": [
+        {
+          "alias": "",
+          "format": "table",
+          "rawSql": "SELECT dev_ip, total_IO, remote_IO, pagein_throughput, pageout_throughput, pagein_latency, pageout_latency FROM (SELECT * FROM block_device) as t GROUP BY dev_ip",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "title": "Block Device Info",
+      "transform": "table",
+      "type": "table"
+    },
+    {
+      "columns": [],
+      "datasource": "Infiniswap",
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 37
+      },
+      "id": 11,
+      "links": [],
+      "pageSize": null,
+      "scroll": true,
+      "showHeader": true,
+      "sort": {
+        "col": 0,
+        "desc": true
+      },
+      "styles": [
+        {
+          "alias": "Time",
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "pattern": "Time",
+          "type": "date"
+        },
+        {
+          "alias": "",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "decimals": 2,
+          "pattern": "/.*/",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        }
+      ],
+      "targets": [
+        {
+          "alias": "",
+          "format": "table",
+          "rawSql": "SELECT dev_ip, RAM_free, RAM_filter_free, RAM_mapped, RAM_allocated FROM daemon WHERE $__timeFilter(time) GROUP BY dev_ip",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "title": "Daemon Info",
+      "transform": "table",
+      "type": "table"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 16,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "allValue": null,
+        "current": {
+          "text": "4",
+          "value": "4"
+        },
+        "datasource": "Infiniswap",
+        "hide": 2,
+        "includeAll": false,
+        "label": null,
+        "multi": false,
+        "name": "device_num",
+        "options": [],
+        "query": "select device_num from general_info order by time desc limit 1;",
+        "refresh": 2,
+        "regex": "",
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "Infiniswap",
+        "hide": 2,
+        "includeAll": true,
+        "label": null,
+        "multi": true,
+        "name": "daemon_ip",
+        "options": [],
+        "query": "select dev_ip from (select * from daemon order by time desc) as t group by t.dev_ip limit $daemon_num;",
+        "refresh": 2,
+        "regex": "",
+        "sort": 1,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "Infiniswap",
+        "hide": 2,
+        "includeAll": true,
+        "label": null,
+        "multi": true,
+        "name": "bd_ip",
+        "options": [],
+        "query": "select dev_ip from (select * from block_device order by time desc) as t group by t.dev_ip limit $bd_num;",
+        "refresh": 2,
+        "regex": "",
+        "sort": 6,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {
+          "text": "1",
+          "value": "1"
+        },
+        "datasource": "Infiniswap",
+        "hide": 2,
+        "includeAll": false,
+        "label": null,
+        "multi": false,
+        "name": "bd_num",
+        "options": [],
+        "query": "select bd_num from general_info order by time desc limit 1;",
+        "refresh": 2,
+        "regex": "",
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {
+          "text": "0",
+          "value": "0"
+        },
+        "datasource": "Infiniswap",
+        "hide": 2,
+        "includeAll": false,
+        "label": null,
+        "multi": false,
+        "name": "daemon_num",
+        "options": [],
+        "query": "select daemon_num from general_info order by time desc limit 1;",
+        "refresh": 2,
+        "regex": "",
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "Infiniswap",
+        "hide": 2,
+        "includeAll": true,
+        "label": null,
+        "multi": false,
+        "name": "daemon_free",
+        "options": [],
+        "query": "select concat(dev_ip, \";\", RAM_free) from (select * from daemon order by time desc) as t group by dev_ip order by time desc limit $daemon_num;",
+        "refresh": 2,
+        "regex": "",
+        "sort": 1,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "Infiniswap",
+        "hide": 2,
+        "includeAll": true,
+        "label": null,
+        "multi": false,
+        "name": "daemon_allocated",
+        "options": [],
+        "query": "select concat(dev_ip, \";\", RAM_allocated) from (select * from daemon order by time desc) as t group by dev_ip order by time desc limit $daemon_num;",
+        "refresh": 2,
+        "regex": "",
+        "sort": 1,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "Infiniswap",
+        "hide": 2,
+        "includeAll": true,
+        "label": null,
+        "multi": false,
+        "name": "daemon_mapped",
+        "options": [],
+        "query": "select concat(dev_ip, \";\", RAM_mapped) from (select * from daemon order by time desc) as t group by dev_ip order by time desc limit $daemon_num;",
+        "refresh": 2,
+        "regex": "",
+        "sort": 1,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "Infiniswap",
+        "hide": 2,
+        "includeAll": true,
+        "label": null,
+        "multi": false,
+        "name": "bd_pagein_throughput",
+        "options": [],
+        "query": "select concat(dev_ip, \";\", pagein_throughput) from (select * from block_device order by time desc) as t group by dev_ip order by time desc limit $bd_num;",
+        "refresh": 2,
+        "regex": "",
+        "sort": 1,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "Infiniswap",
+        "hide": 2,
+        "includeAll": true,
+        "label": null,
+        "multi": false,
+        "name": "bd_pagein_latency",
+        "options": [],
+        "query": "select concat(dev_ip, \";\", pagein_latency) from (select * from block_device order by time desc) as t group by dev_ip order by time desc limit $bd_num;",
+        "refresh": 2,
+        "regex": "",
+        "sort": 1,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "Infiniswap",
+        "hide": 2,
+        "includeAll": true,
+        "label": null,
+        "multi": false,
+        "name": "bd_pageout_throughput",
+        "options": [],
+        "query": "select concat(dev_ip, \";\", pageout_throughput) from (select * from block_device order by time desc) as t group by dev_ip order by time desc limit $bd_num;",
+        "refresh": 2,
+        "regex": "",
+        "sort": 1,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "Infiniswap",
+        "hide": 2,
+        "includeAll": true,
+        "label": null,
+        "multi": false,
+        "name": "bd_pageout_latency",
+        "options": [],
+        "query": "select concat(dev_ip, \";\", pageout_latency) from (select * from block_device order by time desc) as t group by dev_ip order by time desc limit $bd_num;",
+        "refresh": 2,
+        "regex": "",
+        "sort": 1,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "Infiniswap",
+        "hide": 2,
+        "includeAll": true,
+        "label": null,
+        "multi": true,
+        "name": "bd_mapping",
+        "options": [],
+        "query": "SELECT concat(dev_ip, \";\", remote_ip, \";\", pagein_throughput, \";\", pageout_throughput, \";\", pagein_latency, \";\", pageout_latency)  FROM bd_mapping  GROUP BY dev_ip, remote_ip",
+        "refresh": 2,
+        "regex": "",
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      }
+    ]
+  },
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+  },
+  "timezone": "",
+  "title": "General Info",
+  "uid": "000000003",
+  "version": 10
+}

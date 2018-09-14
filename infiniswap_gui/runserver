@@ -1,0 +1,9 @@
+#!/bin/bash
+# usage: ./runserver [port] [clientport] [server_public_ip]
+while :
+do
+time="`date +%Y-%m-%d,%H:%M:%S`"
+echo $time >> /tmp/time_restart
+./master $1 $2 $3
+sleep 1s
+done
