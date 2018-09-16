@@ -461,7 +461,7 @@ void* free_mem(void *data)
         connect_g++;
         mem_status[cnt] = '2';
       }
-    d}
+    }
     mem_status[MAX_FREE_MEM_GB] = '\0';
     //printf("allocated mem_g: %d **** connected mem_g: %d\n", allocate_g, connect_g);
 
