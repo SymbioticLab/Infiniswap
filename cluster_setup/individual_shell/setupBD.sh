@@ -10,7 +10,7 @@ else
     cd ../
 fi
 
-git checkout Dashboard
+git checkout GUI
 cd infiniswap_bd
 make clean
 ./autogen.sh

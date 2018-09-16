@@ -15,8 +15,6 @@ server_ip=`cat ${dir}/server.list | cut -d : -f 2`
 tmux new -s server -d && tmux send -t server "./connect.exp ${server_host} ${server_ip}  GUI server ${server_host}" ENTER # setup GUI server
 fi
 
-exit 
-
 sleep 5
 
 for line in `cat ${dir}/device.list`

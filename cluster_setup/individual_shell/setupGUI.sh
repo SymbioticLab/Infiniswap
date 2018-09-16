@@ -8,6 +8,7 @@ cd socket
 sudo ./compile
 # setup master
 if  [ $1 == "server" ]; then
+    node main.js &
     sudo ./runserver $3 $4 $6
 # setup worker
 elif [ $1 == "client" ]; then

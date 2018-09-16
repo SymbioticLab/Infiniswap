@@ -19,34 +19,37 @@ if { $cmd == "GUI" } {
     set hostport "12135"
     set clientport "12136"
     set server_public_ip [lindex $argv 4]
-    spawn ssh -p 22 $host "chmod +x setupGUI.sh ; sudo ${shell_dir}/setupGUI.sh $mode $local_ip $hostport $clientport $dir $server_public_ip"
+    spawn ssh -p 22 $host "sudo ${shell_dir}/setupGUI.sh $mode $local_ip $hostport $clientport $dir $server_public_ip"
     expect "passphrase"
     send $password
     interact
 } elseif { $cmd == "DM" } {
     set port [lindex $argv 3]
     set mode [lindex $argv 4]
-    spawn ssh -p 22 $host "chmod +x setupDaemon.sh ; sudo ${shell_dir}/setupDaemon.sh $local_ip $port $dir $mode"
+    spawn ssh -p 22 $host "sudo ${shell_dir}/setupDaemon.sh $local_ip $port $dir $mode"
     expect "passphrase"
     send $password
     interact
 } elseif { $cmd == "BD" } {
-    spawn ssh -p 22 $host "chmod +x setupBD.sh ; sudo ${shell_dir}/setupBD.sh $dir"
+    spawn ssh -p 22 $host "sudo ${shell_dir}/setupBD.sh $dir"
     expect "passphrase"
     send $password
     interact 
 } elseif { $cmd == "ST" } {
-    spawn ssh -p 22 $host "chmod +x stop.sh ; sudo ${shell_dir}/stop.sh $dir" 
+    spawn ssh -p 22 $host "sudo ${shell_dir}/stop.sh $dir" 
     expect "passphrase"
     send $password
     interact
 } elseif { $cmd == "IN" } {
     # install
-    spawn ssh -p 22 $host "chmod +x install.sh ; sudo ${shell_dir}/install.sh $dir" 
+    spawn scp ./individual_shell/install.sh $host:$dir/install.sh 
     expect {
             "yes/no"   { send "yes\n\r";exp_continue }
             "passphrase" { send "$password"}
     }
+    interact
+    spawn ssh -p 22 $host "chmod +x ${dir}/install.sh ; sudo ${dir}/install.sh $dir; rm ${dir}/install.sh" 
+    expect "passphrase";
     send $password
     interact
 }

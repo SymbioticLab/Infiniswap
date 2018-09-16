@@ -15,3 +15,4 @@ do
 
     ./connect.exp ${host} ${ip} ST
 done 
+tmux kill-server

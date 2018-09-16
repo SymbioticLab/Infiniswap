@@ -202,6 +202,59 @@ When you use inbox driver, you can compile/link against kernel headers/modules.
 When you use Mellanox OFED, you need to compile/link against OFED headers/modules.
 This should be handled by configure file, and refer the Makefile that links OFED modules.
 
+Cluster setup
+-----------
+
+1. On the host device:
+```bash
+cd cluster_setup/
+./setup_hostdevice.sh
+```
+
+2. modify the configuration:
+```bash
+cd config
+```
+a. modify server.list to be "{server_public_ip}:{server_private_ip}" <br>
+
+b. modify device.list to be "{device_public_ip}:{device_private_ip}" for each device on a separate line (note that the private_ip address will be used to setup infiniswap). <br>
+
+c. modify bd.list to be "{device_public_ip}:{device_private_ip}" for each device which is going to setup a block device <br>
+
+3. modify connect.exp: <br>
+```bash
+cd ..
+vim connect.exp
+```
+a. set user and password as your username and password in order to ssh to remote devices (the ssh command should be "ssh {$user}@ip") <br>
+b. set dir to be the directory to setup infiniswap <br>
+
+4. to install infiniswap on each device: <br>
+
+```bash
+./installall.sh
+```
+
+5. modify portal.list (in infiniswap/setup/ directory) on each device which is going to have block device setup (see the "How to Run" section above about how to write the portal.list file) <br>
+
+6. to setup infiniswap on each device <br>
+a. setup with GUI
+```bash
+./setupall.sh gui
+```
+
+b. setup without GUI
+```bash
+./setupall.sh 
+```
+
+(for debug purpose, use tmux attach -t [session_name] to go to a tmux session, use 'ctrl+b' followed by 'd' to exit tmux window) <br>
+7. to stop infiniswap on each device <br>
+```bash
+./stopall.sh
+```
+
+
 
 Contact
 -----------
