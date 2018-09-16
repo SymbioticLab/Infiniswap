@@ -430,6 +430,7 @@ void* free_mem(void *data)
   printf("%s, is called, last %d GB, weight: %f, %f\n", __func__, last_free_mem_g, CURR_FREE_MEM_WEIGHT, last_free_mem_weight); 
 
 #ifdef IS_GUI
+  printf("Running in GUI mode\n");
   int version = 0;
 #endif
 
@@ -460,7 +461,7 @@ void* free_mem(void *data)
         connect_g++;
         mem_status[cnt] = '2';
       }
-    }
+    d}
     mem_status[MAX_FREE_MEM_GB] = '\0';
     //printf("allocated mem_g: %d **** connected mem_g: %d\n", allocate_g, connect_g);
 
