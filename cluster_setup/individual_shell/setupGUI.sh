@@ -5,8 +5,7 @@ set -x
 cd $5/infiniswap
 git checkout GUI
 cd infiniswap_gui
-cd socket
-sudo ./compile
+make
 # setup master
 if  [ $1 == "server" ]; then
     node main.js &
