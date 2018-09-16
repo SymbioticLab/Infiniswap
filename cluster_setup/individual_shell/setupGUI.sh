@@ -2,8 +2,9 @@
 # usage: /setupGUI.sh [mode] [ip] [hostport] [clientport] [dir] [server_public_ip]
 set -e 
 set -x
-cd $5/infiniswap/infiniswap_gui
-git checkout linux
+cd $5/infiniswap
+git checkout GUI
+cd infiniswap_gui
 cd socket
 sudo ./compile
 # setup master
