@@ -8,7 +8,7 @@ APPS    := infiniswap-daemon
 
 all: ${APPS}
 
-gui: rdma-common.o infiniswap-daemon.o
+gui: rdma-common.c infiniswap-daemon.c
 	${LD} -DIS_GUI -o infiniswap-daemon $^ ${LDLIBS}
 
 infiniswap-daemon: rdma-common.o infiniswap-daemon.o

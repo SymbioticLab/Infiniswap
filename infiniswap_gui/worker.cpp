@@ -8,7 +8,7 @@ using namespace std;
 
 char ip[16];
 const char *swap_area = "/dev/infiniswap0";
-const char *portal_file_addr = "/users/songyuan/infiniswap/setup/portal.list";
+const char *portal_file_addr = "../setup/portal.list";
 int last_version = -1;
 const char *write_latency_files[] = {"/tmp/bd_write_latency_1", "/tmp/bd_write_latency_2", "/tmp/bd_write_latency_3"};
 const char *read_latency_files[] = {"/tmp/bd_read_latency_1", "/tmp/bd_read_latency_2", "/tmp/bd_read_latency_3"};
