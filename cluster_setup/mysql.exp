@@ -1,5 +1,0 @@
-#!/usr/bin/expect
-spawn mysql -u root -p < db.sql
-expect "password"
-send "mysql"
-interact

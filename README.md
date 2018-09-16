@@ -238,6 +238,7 @@ b. set dir to be the directory to setup infiniswap <br>
 5. modify portal.list (in infiniswap/setup/ directory) on each device which is going to have block device setup (see the "How to Run" section above about how to write the portal.list file) <br>
 
 6. to setup infiniswap on each device <br>
+
 a. setup with GUI
 ```bash
 ./setupall.sh gui
@@ -249,6 +250,7 @@ b. setup without GUI
 ```
 
 (for debug purpose, use tmux attach -t [session_name] to go to a tmux session, use 'ctrl+b' followed by 'd' to exit tmux window) <br>
+
 7. to stop infiniswap on each device <br>
 ```bash
 ./stopall.sh
