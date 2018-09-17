@@ -8,9 +8,9 @@ set cmd [lindex $argv 2]
 # ssh user
 set user "songyuan"
 # ssh password
-set password "whlgrz\n\r"
+set password "XXXXXX\n\r"
 # the directory to setup infiniswap
-set dir "/users/songyuan" 
+set dir "/XXX/XXX" 
 set shell_dir "${dir}/infiniswap/cluster_setup/individual_shell"
 
 set host "${user}@${host_ip}"
