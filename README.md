@@ -241,7 +241,7 @@ b. set dir to be the directory to setup infiniswap <br>
 
 a. setup with GUI
 ```bash
-./setupall.sh gui
+./setupall.sh GUI
 ```
 
 b. setup without GUI
@@ -256,6 +256,11 @@ b. setup without GUI
 ./stopall.sh
 ```
 
+GUI Dashboards
+-----------
+1. Open a web browser and go to "[server_ip]:3000" where [server_ip] is the server's public ip address. <br>
+2. The default username and password are both "admin" <br>>
+3. General information is shown in general_info dashboard, and detailed data of block device and daemon can be seen on block_device and daemon dashboards respectively. Note that you can select dev_ip on the top left corner, and change time range on the top right corner.
 
 
 Contact
