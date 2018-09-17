@@ -3,7 +3,6 @@
 set -e
 set -x
 cd $3/infiniswap
-git checkout GUI
 cd setup
 ./ib_setup.sh $1
 sleep 10

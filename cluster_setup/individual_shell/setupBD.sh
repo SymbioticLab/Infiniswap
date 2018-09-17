@@ -7,10 +7,9 @@ set -x
 if [ $# -gt 0 ]; then
     cd $1/infiniswap
 else
-    cd ../
+    cd ../../
 fi
 
-git checkout GUI
 cd infiniswap_bd
 make clean
 ./autogen.sh

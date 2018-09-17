@@ -3,7 +3,6 @@
 set -e 
 set -x
 cd $5/infiniswap
-git checkout GUI
 cd infiniswap_gui
 make
 # setup master
