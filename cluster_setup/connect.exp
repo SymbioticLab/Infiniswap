@@ -55,7 +55,7 @@ if { $cmd == "GUI" } {
     interact
 } elseif { $cmd == "SER" } { 
     # server environment setup
-    spawn ssh -p 22 $host "sudo ${shell_dir}/setup_server_environment.sh" 
+    spawn ssh -p 22 $host "sudo ${shell_dir}/../setup_server_environment.sh" 
     expect "passphrase";
     send $password
     interact

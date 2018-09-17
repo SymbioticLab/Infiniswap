@@ -13,7 +13,7 @@ sudo apt-get -y install mysql-server
 mysql -u root -p"mysql" < db.sql
 sudo service mysql start
 sudo apt-get install -y nodejs
-sudo apt-get install npm
+echo Y | sudo apt-get install npm
 sudo npm cache clean -f
 npm config set strict-ssl false
 sudo npm install -g n
