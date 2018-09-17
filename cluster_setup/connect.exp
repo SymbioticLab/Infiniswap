@@ -1,5 +1,6 @@
 #!/usr/bin/expect
 # usage: ./connect.exp [host_ip] [local_ip] [cmd] [mode/port] ([server_public_ip])
+
 set host_ip [lindex $argv 0]
 set local_ip [lindex $argv 1]
 set cmd [lindex $argv 2]
@@ -52,9 +53,9 @@ if { $cmd == "GUI" } {
     expect "passphrase";
     send $password
     interact
-} elseif ${ $cmd == "SER" } { 
+} elseif { $cmd == "SER" } { 
     # server environment setup
-    spawn ssh -p 22 $host "sudo ${shell_dir}/setup_server_environment" 
+    spawn ssh -p 22 $host "sudo ${shell_dir}/setup_server_environment.sh" 
     expect "passphrase";
     send $password
     interact
