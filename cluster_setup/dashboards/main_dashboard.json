@@ -17,7 +17,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1537043266468,
+  "iteration": 1538208672659,
   "links": [
     {
       "asDropdown": true,
@@ -850,8 +850,8 @@
       {
         "allValue": null,
         "current": {
-          "text": "0",
-          "value": "0"
+          "text": "4",
+          "value": "4"
         },
         "datasource": "Infiniswap",
         "hide": 2,
@@ -906,7 +906,7 @@
         "multi": true,
         "name": "bd_ip",
         "options": [],
-        "query": "select dev_ip from (select * from block_device order by time desc) as t group by t.dev_ip limit $bd_num;",
+        "query": "select dev_ip from (select * from block_device order by time desc) as t  group by t.dev_ip order by t.time desc limit $bd_num;",
         "refresh": 2,
         "regex": "",
         "sort": 6,
@@ -919,8 +919,8 @@
       {
         "allValue": null,
         "current": {
-          "text": "0",
-          "value": "0"
+          "text": "2",
+          "value": "2"
         },
         "datasource": "Infiniswap",
         "hide": 2,
@@ -942,8 +942,8 @@
       {
         "allValue": null,
         "current": {
-          "text": "0",
-          "value": "0"
+          "text": "4",
+          "value": "4"
         },
         "datasource": "Infiniswap",
         "hide": 2,

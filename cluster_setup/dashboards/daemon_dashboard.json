@@ -2,7 +2,7 @@
   "annotations": {
     "list": [
       {
-        "$$hashKey": "object:910",
+        "$$hashKey": "object:96",
         "builtIn": 1,
         "datasource": "-- Grafana --",
         "enable": true,
@@ -17,7 +17,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1536888079611,
+  "iteration": 1538208757178,
   "links": [
     {
       "asDropdown": false,
@@ -199,9 +199,8 @@
       {
         "allValue": null,
         "current": {
-          "isNone": true,
-          "text": "None",
-          "value": ""
+          "text": "192.168.0.56",
+          "value": "192.168.0.56"
         },
         "datasource": "Infiniswap",
         "hide": 0,
@@ -210,7 +209,7 @@
         "multi": false,
         "name": "device_ip",
         "options": [],
-        "query": "select dev_ip from (select * from daemon order by time desc) as t group by t.dev_ip limit $daemon_num;",
+        "query": "select dev_ip from (select * from daemon order by time desc) as t group by t.dev_ip order by t.time desc limit $daemon_num;",
         "refresh": 2,
         "regex": "",
         "sort": 1,
@@ -223,9 +222,8 @@
       {
         "allValue": null,
         "current": {
-          "isNone": true,
-          "text": "None",
-          "value": ""
+          "text": "22111111000000000000000000000000",
+          "value": "22111111000000000000000000000000"
         },
         "datasource": "Infiniswap",
         "hide": 2,
@@ -247,8 +245,8 @@
       {
         "allValue": null,
         "current": {
-          "text": "0",
-          "value": "0"
+          "text": "4",
+          "value": "4"
         },
         "datasource": "Infiniswap",
         "hide": 2,
@@ -324,5 +322,5 @@
   "timezone": "",
   "title": "daemon",
   "uid": "ztudW-Iiz",
-  "version": 1
+  "version": 3
 }

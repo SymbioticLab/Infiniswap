@@ -2,7 +2,7 @@
   "annotations": {
     "list": [
       {
-        "$$hashKey": "object:1036",
+        "$$hashKey": "object:212",
         "builtIn": 1,
         "datasource": "-- Grafana --",
         "enable": true,
@@ -17,7 +17,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1536888102887,
+  "iteration": 1538208827388,
   "links": [
     {
       "icon": "external link",
@@ -461,8 +461,8 @@
       {
         "allValue": null,
         "current": {
-          "text": "192.168.0.57",
-          "value": "192.168.0.57"
+          "text": "192.168.0.58",
+          "value": "192.168.0.58"
         },
         "datasource": "Infiniswap",
         "hide": 0,
@@ -473,11 +473,16 @@
         "options": [
           {
             "selected": true,
-            "text": "192.168.0.57",
-            "value": "192.168.0.57"
+            "text": "192.168.0.58",
+            "value": "192.168.0.58"
+          },
+          {
+            "selected": false,
+            "text": "192.168.0.59",
+            "value": "192.168.0.59"
           }
         ],
-        "query": "select dev_ip from (select * from block_device order by time desc) as t group by t.dev_ip limit $bd_num;",
+        "query": "select dev_ip from (select * from block_device order by time desc) as t group by t.dev_ip order by t.time desc limit $bd_num;",
         "refresh": 0,
         "regex": "",
         "sort": 0,
@@ -490,8 +495,8 @@
       {
         "allValue": null,
         "current": {
-          "text": "1",
-          "value": "1"
+          "text": "2",
+          "value": "2"
         },
         "datasource": "Infiniswap",
         "hide": 2,
@@ -544,5 +549,5 @@
   "timezone": "",
   "title": "block_device",
   "uid": "DxYJ2HSiz",
-  "version": 3
+  "version": 2
 }

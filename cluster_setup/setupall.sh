@@ -22,11 +22,22 @@ do
     host=`echo $line | cut -d : -f 1`
     ip=`echo $line | cut -d : -f 2`
     if [ "$#" -eq 1 ] && [ "$1" == "GUI" ]; then
-    tmux new -s ${ip//./_}c -d && tmux send -t ${ip//./_}c "./connect.exp ${host} ${ip} GUI client ${server_host}" ENTER # setup GUI client
     tmux new -s ${ip//./_}d -d && tmux send -t ${ip//./_}d "./connect.exp ${host} ${ip} DM ${daemon_port} GUI" ENTER # setup daemon
     else
     tmux new -s ${ip//./_}d -d && tmux send -t ${ip//./_}d "./connect.exp ${host} ${ip} DM ${daemon_port} BASIC" ENTER # setup daemon
     fi
+    
+done
+
+sleep 2
+
+for line in `cat ${dir}/device.list`
+do
+    host=`echo $line | cut -d : -f 1`
+    ip=`echo $line | cut -d : -f 2`
+    if [ "$#" -eq 1 ] && [ "$1" == "GUI" ]; then
+    tmux new -s ${ip//./_}c -d && tmux send -t ${ip//./_}c "./connect.exp ${host} ${ip} GUI client ${server_host}" ENTER # setup GUI client
+    fdi
     
 done
 
