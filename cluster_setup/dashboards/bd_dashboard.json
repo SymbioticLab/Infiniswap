@@ -2,7 +2,7 @@
   "annotations": {
     "list": [
       {
-        "$$hashKey": "object:212",
+        "$$hashKey": "object:90",
         "builtIn": 1,
         "datasource": "-- Grafana --",
         "enable": true,
@@ -17,7 +17,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1538208827388,
+  "iteration": 1538964999447,
   "links": [
     {
       "icon": "external link",
@@ -470,20 +470,9 @@
         "label": null,
         "multi": false,
         "name": "device_ip",
-        "options": [
-          {
-            "selected": true,
-            "text": "192.168.0.58",
-            "value": "192.168.0.58"
-          },
-          {
-            "selected": false,
-            "text": "192.168.0.59",
-            "value": "192.168.0.59"
-          }
-        ],
+        "options": [],
         "query": "select dev_ip from (select * from block_device order by time desc) as t group by t.dev_ip order by t.time desc limit $bd_num;",
-        "refresh": 0,
+        "refresh": 2,
         "regex": "",
         "sort": 0,
         "tagValuesQuery": "",
@@ -495,8 +484,8 @@
       {
         "allValue": null,
         "current": {
-          "text": "2",
-          "value": "2"
+          "text": "4",
+          "value": "4"
         },
         "datasource": "Infiniswap",
         "hide": 2,
