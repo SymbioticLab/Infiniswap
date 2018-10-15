@@ -11,7 +11,7 @@ else
 fi
 
 cd infiniswap_bd
-if [ $# -gt 1] && [$2 == 'GUI']; then
+if [ $# -gt 1 ] && [ $2 == 'GUI' ]; then
     sed -i 's/\/\/#define IS_GUI/#define IS_GUI/g' infiniswap.h
 else
     grep '//#define IS_GUI' infiniswap.h

@@ -1826,8 +1826,9 @@ int IS_session_create(const char *portal, struct IS_session *IS_session)
 
 	strcpy(name, "rdma_trigger_thread");
 	IS_session->rdma_trigger_thread = kthread_create(rdma_trigger, IS_session, name);
-
+	#ifdef IS_GUI
 	kthread_run(write_info, NULL, "write_info_thread");
+	#endif
 
 	return 0;
 

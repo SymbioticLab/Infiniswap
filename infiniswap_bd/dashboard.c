@@ -130,14 +130,6 @@ void write_info(void)
     while (1)
     {
         ssleep(1);
-        /*
-        int i;
-        // test latency calculation
-        for (i = 900; i <= 1000; i++){
-            add_latency(i * 1000, 0, 0);
-            add_latency(i * 1000, 2, 1);
-        }
-        */
     
         write_to_file();
         clear_info();
