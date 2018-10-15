@@ -8,9 +8,9 @@ set cmd [lindex $argv 2]
 # ssh user
 set user "songyuan"
 # ssh password
-set password "XXXXXX\n\r"
+set password "whlgrz\n\r"
 # the directory to setup infiniswap
-set dir "/XXX/XXX" 
+set dir "/users/songyuan" 
 set shell_dir "${dir}/infiniswap/cluster_setup/individual_shell"
 
 set host "${user}@${host_ip}"
@@ -32,7 +32,8 @@ if { $cmd == "GUI" } {
     send $password
     interact
 } elseif { $cmd == "BD" } {
-    spawn ssh -p 22 $host "sudo ${shell_dir}/setupBD.sh $dir"
+    set mode [lindex $argv 3]
+    spawn ssh -p 22 $host "sudo ${shell_dir}/setupBD.sh $dir $mode"
     expect "passphrase"
     send $password
     interact 

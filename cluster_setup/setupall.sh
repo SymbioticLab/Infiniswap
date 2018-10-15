@@ -46,5 +46,9 @@ do
     host=`echo $line | cut -d : -f 1`
     ip=`echo $line | cut -d : -f 2`
 
-    tmux new -s ${ip//./_}b -d && tmux send -t ${ip//./_}b "./connect.exp ${host} ${ip} BD" ENTER # setup bd 
+    if [ "$#" -eq 1 ] && [ "$1" == "GUI" ]; then 
+    tmux new -s ${ip//./_}b -d && tmux send -t ${ip//./_}b "./connect.exp ${host} ${ip} BD GUI" ENTER # setup bd
+    else
+    tmux new -s ${ip//./_}b -d && tmux send -t ${ip//./_}b "./connect.exp ${host} ${ip} BD BASIC" ENTER # setup bd 
+    fi
 done 

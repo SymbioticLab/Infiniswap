@@ -42,7 +42,7 @@
 #ifndef INFINISWAP_H
 #define INFINISWAP_H
 
-#define IS_GUI
+//#define IS_GUI
 
 #include <linux/kernel.h>
 #include <linux/module.h>
