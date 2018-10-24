@@ -46,8 +46,7 @@
 #include "infiniswap.h"
 
 /* lookup_bdev patch: https://www.redhat.com/archives/dm-devel/2016-April/msg00372.html */
-//#define LOOKUP_BDEV_PATCH
-#ifdef LOOKUP_BDEV_PATCH
+#ifdef HAVE_LOOKUP_BDEV_PATCH
 #define LOOKUP_BDEV(x) lookup_bdev(x, 0)
 #else
 #define LOOKUP_BDEV(x) lookup_bdev(x)

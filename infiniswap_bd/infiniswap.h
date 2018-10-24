@@ -90,6 +90,8 @@
 #include <linux/hdreg.h>
 #include <trace/events/block.h>
 
+#include "config.h"
+
 // from NBDX
 #define SUBMIT_BLOCK_SIZE				\
 	+ sizeof(uint32_t) /* raio_filedes */		\
@@ -144,10 +146,15 @@ struct raio_iocb {
 #define SUBMIT_HEADER_SIZE (SUBMIT_BLOCK_SIZE +	    \
 			    LAST_IN_BATCH +	    \
 			    sizeof(struct raio_command))
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
-#define MAX_SGL_LEN 1	/* kernel 4.x only supports single page request*/
+
+#ifdef USER_MAX_PAGE_NUM
+	#define MAX_SGL_LEN USER_MAX_PAGE_NUM	/* max pages in a single struct request (swap IO request) */
 #else
-#define MAX_SGL_LEN 32	/* max pages in a single struct request (swap IO request) */
+	#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+		#define MAX_SGL_LEN 1	/* kernel 4.x only supports single page request*/
+	#else
+		#define MAX_SGL_LEN 32	/* max pages in a single struct request (swap IO request) */
+	#endif
 #endif
 struct raio_io_u {
 	struct scatterlist  sgl[MAX_SGL_LEN];
@@ -187,8 +194,17 @@ struct raio_io_u {
 #define QUEUE_NUM_MASK	0x001f	//used in addr->(mapping)-> rdma_queue in IS_main.c
 
 //backup disk / swap space  size (GB)
-#define STACKBD_SIZE_G	12
-#define BACKUP_DISK	"/dev/sda4"
+#ifdef USER_STACKBD_SIZE
+	#define STACKBD_SIZE_G	USER_STACKBD_SIZE
+#else
+	#define STACKBD_SIZE_G	12
+#endif
+
+#ifdef USER_BACKUP_DISK
+	#define BACKUP_DISK	USER_BACKUP_DISK
+#else
+	#define BACKUP_DISK	"/dev/sda4"
+#endif
 //how may pages can be added into a single bio (128KB = 32 x 4KB)
 #define BIO_PAGE_CAP	32
 
@@ -197,7 +213,11 @@ struct raio_io_u {
 #define STACKBD_BDEV_MODE (FMODE_READ | FMODE_WRITE | FMODE_EXCL)
 #define KERNEL_SECTOR_SIZE 512
 #define STACKBD_DO_IT _IOW( 0xad, 0, char * )
-#define STACKBD_NAME "stackbd"
+#ifdef USER_STACKBD_NAME
+	#define STACKBD_NAME USER_STACKBD_NAME
+#else
+	#define STACKBD_NAME "stackbd"
+#endif
 #define STACKBD_NAME_0 STACKBD_NAME "0"
 
 static struct stackbd_t {
@@ -236,7 +256,11 @@ enum mem_type {
 };
 
 //max_size from one server or max_size one server can provide
-#define MAX_MR_SIZE_GB 32
+#ifdef USER_MAX_REMOTE_MEMORY
+	#define MAX_MR_SIZE_GB USER_MAX_REMOTE_MEMORY
+#else
+	#define MAX_MR_SIZE_GB 32
+#endif
 
 struct IS_rdma_info {
   	uint64_t buf[MAX_MR_SIZE_GB];
@@ -480,7 +504,11 @@ enum cb_state {
 #define DEV_RDMA_OFF	0
 
 //  server selection, call m server each time.
-#define SERVER_SELECT_NUM 1
+#ifdef USER_NUM_SERVER_SELECT
+	#define SERVER_SELECT_NUM USER_NUM_SERVER_SELECT
+#else
+	#define SERVER_SELECT_NUM 1
+#endif
 
 struct IS_session {
 	// Nov19 request distribution
