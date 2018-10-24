@@ -1,4 +1,4 @@
-AC_INIT([infiniswap],[0.1],[infiniswap@umich.edu])
+AC_INIT([infiniswap block device],[0.1],[infiniswap@umich.edu])
 
 AC_PROG_INSTALL
 
