@@ -205,8 +205,14 @@ struct raio_io_u {
 #else
 	#define BACKUP_DISK	"/dev/sda4"
 #endif
+
 //how may pages can be added into a single bio (128KB = 32 x 4KB)
-#define BIO_PAGE_CAP	32
+#ifdef USER_BIO_PAGE_CAP
+	#define BIO_PAGE_CAP	USER_BIO_PAGE_CAP
+#else
+	#define BIO_PAGE_CAP	32
+#endif
+
 
 #define STACKBD_REDIRECT_OFF 0
 #define STACKBD_REDIRECT_ON  1

@@ -1,4 +1,4 @@
-AC_INIT([infiniswap block device],[0.1],[infiniswap@umich.edu])
+AC_INIT([infiniswap block device],[0.1],[infiniswap@umich.edu], [], [https://github.com/SymbioticLab/infiniswap])
 
 AC_PROG_INSTALL
 
@@ -38,12 +38,20 @@ AC_ARG_ENABLE([max_page_num],
 AC_DEFINE_UNQUOTED([USER_MAX_PAGE_NUM], [${user_max_page_num}], [the max page number in a single struct request (swap IO request)])
 
 
+AC_ARG_ENABLE([bio_page_cap],
+[AS_HELP_STRING([--enable-bio_page_cap],
+[User specifies the max page number in a single bio request, default is 32])],
+[user_bio_page_cap=${enableval}], [user_bio_page_cap=32])
+
+AC_DEFINE_UNQUOTED([USER_BIO_PAGE_CAP], [${user_bio_page_cap}], [the max page number in a single bio request, default is 32])
+
+
 AC_ARG_ENABLE([max_remote_memory],
 [AS_HELP_STRING([--enable-max_remote_memory],
 [User defines the max remote memory size from one server, default is 32])],
 [user_max_remote_memory=${enableval}], [user_max_remote_memory=32])
 
-AC_DEFINE_UNQUOTED([USER_MAX_REMOTE_MEMORY], [${user_max_remote_memory}], [the max remote memory size from one server])
+AC_DEFINE_UNQUOTED([USER_MAX_REMOTE_MEMORY], [${user_max_remote_memory}], [the max remote memory size from one server, default is 32])
 
 
 AC_ARG_ENABLE([stackbd_size],
@@ -51,7 +59,7 @@ AC_ARG_ENABLE([stackbd_size],
 [User defines the size of stackbd (backup) disk which should be >= the size of remote memory, default is 12])],
 [user_stackbd_size=${enableval}], [user_stackbd_size=12])
 
-AC_DEFINE_UNQUOTED([USER_STACKBD_SIZE], [${user_stackbd_size}], [stackbd (backup) disk size])
+AC_DEFINE_UNQUOTED([USER_STACKBD_SIZE], [${user_stackbd_size}], [stackbd (backup) disk size], default is 12)
 
 
 AC_ARG_ENABLE([stackbd_name],
@@ -59,7 +67,7 @@ AC_ARG_ENABLE([stackbd_name],
 [User defines the name of stackbd (backup) disk, default is "stackbd"])],
 [user_stackbd_name="${enableval}"], [user_stackbd_name="stackbd"])
 
-AC_DEFINE_UNQUOTED([USER_STACKBD_NAME], ["${user_stackbd_name}"], [the name of stackbd disk])
+AC_DEFINE_UNQUOTED([USER_STACKBD_NAME], ["${user_stackbd_name}"], [the name of stackbd disk], default is "stackbd")
 
 
 AC_ARG_ENABLE([backup_disk],
@@ -67,7 +75,7 @@ AC_ARG_ENABLE([backup_disk],
 [User specifies which physical disk partition will be used for backup, default is "/dev/sda4"])],
 [user_backup_disk="${enableval}"], [user_backup_disk="/dev/sda4"])
 
-AC_DEFINE_UNQUOTED([USER_BACKUP_DISK], ["${user_backup_disk}"], [the name of physical backup disk])
+AC_DEFINE_UNQUOTED([USER_BACKUP_DISK], ["${user_backup_disk}"], [the name of physical backup disk, default is "/dev/sda4"])
 
 
 AC_ARG_ENABLE([num_server_select],
@@ -75,7 +83,7 @@ AC_ARG_ENABLE([num_server_select],
 [User defines the number of queried server in looking for remote memory, default is 1])],
 [user_num_server_select="${enableval}"], [user_num_server_select=1])
 
-AC_DEFINE_UNQUOTED([USER_NUM_SERVER_SELECT], [${user_num_server_select}], [the number of queried server in looking for remote memory])
+AC_DEFINE_UNQUOTED([USER_NUM_SERVER_SELECT], [${user_num_server_select}], [the number of queried server in looking for remote memory, default is 1])
 
 AC_CONFIG_HEADERS([config.h])
 
