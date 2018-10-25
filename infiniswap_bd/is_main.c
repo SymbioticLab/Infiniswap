@@ -200,7 +200,7 @@ void stackbd_bio_generate(struct rdma_ctx *ctx, struct request *req)
 	cloned_bio->bi_io_vec->bv_page  = pg; 
 	cloned_bio->bi_io_vec->bv_len = io_size;
 	cloned_bio->bi_io_vec->bv_offset = 0;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)
 	cloned_bio->bi_iter.bi_size = io_size;
 #else
 	cloned_bio->bi_size = io_size;

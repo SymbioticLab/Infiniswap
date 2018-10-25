@@ -427,7 +427,7 @@ void* free_mem(void *data)
 
   rdma_session_init(&session);
   last_free_mem_g = (int)(get_free_mem() / ONE_MB);
-  printf("%s, is called, last %d GB, weight: %f, %f\n", __func__, last_free_mem_g, CURR_FREE_MEM_WEIGHT, last_free_mem_weight); 
+  printf("%s, is called, last %d GB, weight: %f, %f\n", __func__, last_free_mem_g, (float)(CURR_FREE_MEM_WEIGHT), last_free_mem_weight); 
 
 #ifdef IS_GUI
   printf("Running in GUI mode\n");

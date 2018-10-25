@@ -7,7 +7,7 @@ set -x
 
 dir="config"
 
-for line in `cat ${dir}/device.list`
+for line in `cat ${dir}/daemon.list`
 do  
     echo $line
     host=`echo $line | cut -d : -f 1`

@@ -44,13 +44,13 @@ if { $cmd == "GUI" } {
     interact
 } elseif { $cmd == "IN" } {
     # install
-    spawn scp ./individual_shell/install.sh $host:$dir/install.sh 
+    spawn scp ./individual_shell/download.sh $host:$dir/download.sh 
     expect {
             "yes/no"   { send "yes\n\r";exp_continue }
             "passphrase" { send "$password"}
     }
     interact
-    spawn ssh -p 22 $host "chmod +x ${dir}/install.sh ; sudo ${dir}/install.sh $dir; rm ${dir}/install.sh" 
+    spawn ssh -p 22 $host "chmod +x ${dir}/download.sh ; sudo ${dir}/download.sh $dir; rm ${dir}/download.sh" 
     expect "passphrase";
     send $password
     interact

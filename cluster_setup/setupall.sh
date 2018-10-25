@@ -10,14 +10,14 @@ daemon_port="9400";
 dir="config"
 
 if [ "$#" -eq 1 ] && [ "$1" == "GUI" ]; then
-server_host=`cat ${dir}/server.list | cut -d : -f 1`
-server_ip=`cat ${dir}/server.list | cut -d : -f 2`
+server_host=`cat ${dir}/dashboard-server.list | cut -d : -f 1`
+server_ip=`cat ${dir}/dashboard-server.list | cut -d : -f 2`
 tmux new -s server -d && tmux send -t server "./connect.exp ${server_host} ${server_ip}  GUI server ${server_host}" ENTER # setup GUI server
 fi
 
 sleep 5
 
-for line in `cat ${dir}/device.list`
+for line in `cat ${dir}/daemon.list`
 do
     host=`echo $line | cut -d : -f 1`
     ip=`echo $line | cut -d : -f 2`
@@ -31,7 +31,7 @@ done
 sleep 2
 
 if [ "$#" -eq 1 ] && [ "$1" == "GUI" ]; then
-for line in `cat ${dir}/device.list`
+for line in `cat ${dir}/daemon.list`
     do
         host=`echo $line | cut -d : -f 1`
         ip=`echo $line | cut -d : -f 2`

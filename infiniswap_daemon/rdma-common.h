@@ -18,6 +18,15 @@
 #include <netinet/in.h>
 #include <linux/kernel.h>
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+
+#ifdef USER_NEED_GUI
+  #define IS_GUI
+#endif
+
 #define TEST_NZ(x) do { if ( (x)) die("error: " #x " failed (returned non-zero)." ); } while (0)
 #define TEST_Z(x)  do { if (!(x)) die("error: " #x " failed (returned zero/null)."); } while (0)
 
@@ -25,20 +34,57 @@
 #define CQ_QP_IDLE 0
 #define CQ_QP_DOWN 2
 
-#define MAX_CLIENT	32
+
+#ifdef USER_MAX_CLIENT
+  #define MAX_CLIENT	USER_MAX_CLIENT
+#else
+  #define MAX_CLIENT	32
+#endif
+
 #define EXTRA_CHUNK_NUM 2
 
-#define MAX_FREE_MEM_GB 32 //for local memory management
-#define MAX_MR_SIZE_GB 32 //for msg passing
+
+#ifdef USER_MAX_REMOTE_MEMORY
+  #define MAX_FREE_MEM_GB USER_MAX_REMOTE_MEMORY //for local memory management
+  #define MAX_MR_SIZE_GB MAX_FREE_MEM_GB //for msg passing
+#else
+  #define MAX_FREE_MEM_GB 32 //for local memory management
+  #define MAX_MR_SIZE_GB 32 //for msg passing
+#endif
+
 
 #define ONE_MB 1048576
 #define ONE_GB 1073741824
-#define FREE_MEM_EVICT_THRESHOLD 5 //in GB
-#define FREE_MEM_EXPAND_THRESHOLD 20 // in GB
-#define CURR_FREE_MEM_WEIGHT 0.7
-#define MEM_EVICT_HIT_THRESHOLD 5
-#define MEM_EXPAND_HIT_THRESHOLD 20
 
+#ifdef USER_REMOTE_MEMORY_EVICT
+  #define FREE_MEM_EVICT_THRESHOLD USER_REMOTE_MEMORY_EVICT //in GB
+#else
+  #define FREE_MEM_EVICT_THRESHOLD 8 //in GB
+#endif
+
+#ifdef USER_REMOTE_MEMORY_EXPAND
+  #define FREE_MEM_EXPAND_THRESHOLD USER_REMOTE_MEMORY_EXPAND //in GB
+#else
+  #define FREE_MEM_EXPAND_THRESHOLD 16 // in GB
+#endif
+
+#ifdef USER_EVICT_HIT_LIMIT
+  #define MEM_EVICT_HIT_THRESHOLD USER_EVICT_HIT_LIMIT
+#else
+  #define MEM_EVICT_HIT_THRESHOLD 1 
+#endif
+
+#ifdef USER_EXPAND_HIT_LIMIT
+  #define MEM_EXPAND_HIT_THRESHOLD USER_EXPAND_HIT_LIMIT
+#else
+  #define MEM_EXPAND_HIT_THRESHOLD 20
+#endif
+
+#ifdef USER_MEASURED_FREE_MEM_WEIGHT
+  #define CURR_FREE_MEM_WEIGHT USER_MEASURED_FREE_MEM_WEIGHT
+#else
+  #define CURR_FREE_MEM_WEIGHT 0.7
+#endif
 
 #define ntohll(x) (((uint64_t)(ntohl((int)((x << 32) >> 32))) << 32) | \
         (unsigned int)ntohl(((int)(x >> 32))))
