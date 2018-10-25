@@ -100,7 +100,7 @@ daemon_options="--enable-max_client=${max_client} \
     --enable-measured_free_mem_weight=${measured_free_mem_weight}"
 
 if [ ${user_need_gui} -gt 0 ];then
-    daemon_options="${bd_options} \
+    daemon_options="${daemon_options} \
     --enable-gui"
 fi
 
@@ -115,12 +115,8 @@ cd ../infiniswap_bd
 make 
 sudo make install
 echo "....... done"
-exit 1
-fi
-
-
 #build infiniswap daemon
-if [ $1 == "daemon" ]; then
+elif [ $1 == "daemon" ]; then
 echo "........ install infiniswap daemon, options:"
 echo "${daemon_options}"
 cd ../infiniswap_daemon
@@ -128,5 +124,4 @@ cd ../infiniswap_daemon
 ./configure ${daemon_options}
 make 
 echo "....... done"
-exit 1
 fi
