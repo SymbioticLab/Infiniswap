@@ -5,7 +5,7 @@ set -x
 
 cd $1
 if [ ! -d "infiniswap" ]; then
-git clone https://github.com/juncgu/infiniswap
+git clone https://github.com/SymbioticLab/infiniswap
 cd infiniswap
 git checkout GUI
 else
