@@ -141,6 +141,7 @@ def createHost(parser, opts):
 
     parser.add_section(nbdxhost)
     parser.set(nbdxhost, 'portal', opts.portal)
+    print("create host\n")
 
     return 0
 

@@ -22,6 +22,11 @@
 #include <config.h>
 #endif
 
+
+#ifdef USER_NEED_GUI
+  #define IS_GUI
+#endif
+
 #define TEST_NZ(x) do { if ( (x)) die("error: " #x " failed (returned non-zero)." ); } while (0)
 #define TEST_Z(x)  do { if (!(x)) die("error: " #x " failed (returned zero/null)."); } while (0)
 
@@ -89,6 +94,14 @@ enum mode {
   M_READ
 };
 
+#ifdef IS_GUI
+// add control msg info
+struct control_msg{
+	char cmd[20];
+};
+
+pthread_t control_msg_listen_thread;
+#endif
 
 struct message {
   uint64_t buf[MAX_MR_SIZE_GB];
@@ -127,6 +140,7 @@ struct connection {
 
   struct rdma_session *sess;
   int conn_index; //conn index in sess->conns
+  char bd_ip[16];
   int sess_chunk_map[MAX_MR_SIZE_GB];
   int mapped_chunk_size;
 
@@ -211,7 +225,7 @@ struct rdma_session {
 
 void die(const char *reason);
 
-void build_connection(struct rdma_cm_id *id);
+struct connection * build_connection(struct rdma_cm_id *id);
 void build_params(struct rdma_conn_param *params);
 void destroy_connection(void *context);
 void * get_serving_mem_region(void *context);

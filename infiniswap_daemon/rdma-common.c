@@ -76,8 +76,8 @@ long get_free_mem(void)
   return res;
 }
 
-
-void build_connection(struct rdma_cm_id *id)
+// return the number of connection
+struct connection * build_connection(struct rdma_cm_id *id)
 {
   int i;
   struct connection *conn;
@@ -109,12 +109,15 @@ void build_connection(struct rdma_cm_id *id)
     conn->sess_chunk_map[i] = -1;
   }
   conn->mapped_chunk_size = 0;
+
+  struct connection* result = NULL;
   //add to session 
   for (i=0; i<MAX_CLIENT; i++){
     if (session.conns_state[i] == CONN_IDLE){
       session.conns[i] = conn;
       session.conns_state[i] = CONN_CONNECTED;
       conn->conn_index = i;
+      result = conn;
       break;
     } 
   }
@@ -122,6 +125,8 @@ void build_connection(struct rdma_cm_id *id)
 
   register_memory(conn);
   post_receives(conn);
+
+  return result;
 }
 
 void build_context(struct ibv_context *verbs)
@@ -424,10 +429,54 @@ void* free_mem(void *data)
   last_free_mem_g = (int)(get_free_mem() / ONE_MB);
   printf("%s, is called, last %d GB, weight: %f, %f\n", __func__, last_free_mem_g, (float)(CURR_FREE_MEM_WEIGHT), last_free_mem_weight); 
 
+#ifdef IS_GUI
+  printf("Running in GUI mode\n");
+  int version = 0;
+#endif
+
   while (running) {// server is working
     free_mem_g = (int)(get_free_mem() / ONE_MB);
+#ifdef IS_GUI
+    //printf("free_mem_g: %d ****", free_mem_g);
+#endif
     //need a filter
     filtered_free_mem_g = (int)(CURR_FREE_MEM_WEIGHT * free_mem_g + last_free_mem_g * last_free_mem_weight); 
+#ifdef IS_GUI
+    //printf("filtered_free_mem_g: %d\n", filtered_free_mem_g);
+#endif
+
+#ifdef IS_GUI
+    int allocate_g = 0;
+    int connect_g = 0;
+    int cnt = 0;
+    char mem_status[MAX_FREE_MEM_GB + 1];
+
+    for (cnt = 0; cnt < MAX_FREE_MEM_GB; cnt++){
+      mem_status[cnt] = '0';
+      if (session.rdma_remote.malloc_map[cnt] == CHUNK_MALLOCED){
+        allocate_g++;
+        mem_status[cnt] = '1';
+      }
+      if (session.rdma_remote.conn_map[cnt] != -1){
+        connect_g++;
+        mem_status[cnt] = '2';
+      }
+    }
+    mem_status[MAX_FREE_MEM_GB] = '\0';
+    //printf("allocated mem_g: %d **** connected mem_g: %d\n", allocate_g, connect_g);
+
+    FILE* ofile = fopen("/tmp/daemon", "w");
+    fprintf(ofile, "%d %d %d %d %d %d %s\n", 1, version++, free_mem_g, filtered_free_mem_g, allocate_g - connect_g, connect_g, mem_status);
+    // print the mapping information to the file
+    for (cnt = 0; cnt < MAX_FREE_MEM_GB; cnt++){
+      if (mem_status[cnt] == '2'){
+        fprintf(ofile, "%s %d\n", session.conns[session.rdma_remote.conn_map[cnt]]->bd_ip, session.rdma_remote.conn_chunk_map[cnt]);
+      }
+    }
+
+    fclose(ofile);
+#endif
+
     last_free_mem_g = filtered_free_mem_g;
     if (filtered_free_mem_g < FREE_MEM_EVICT_THRESHOLD){
       evict_hit_count += 1;

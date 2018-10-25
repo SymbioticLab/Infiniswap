@@ -123,8 +123,11 @@ void IS_insert_ctx(struct rdma_ctx *ctx)
 
 	spin_unlock_irqrestore(&free_ctxs->ctx_lock, flags);
 }
-
+#ifdef IS_GUI
+int IS_rdma_read(struct IS_connection *IS_conn, struct kernel_cb *cb, int cb_index, int chunk_index, struct remote_chunk_g *chunk, unsigned long offset, unsigned long len, struct request *req, struct IS_queue *q, struct timespec ts)
+#else
 int IS_rdma_read(struct IS_connection *IS_conn, struct kernel_cb *cb, int cb_index, int chunk_index, struct remote_chunk_g *chunk, unsigned long offset, unsigned long len, struct request *req, struct IS_queue *q)
+#endif
 {
 	int ret;
 	struct ib_send_wr *bad_wr;
@@ -149,6 +152,10 @@ int IS_rdma_read(struct IS_connection *IS_conn, struct kernel_cb *cb, int cb_ind
 		IS_conn = IS_conn->IS_sess->IS_conns[conn_id];
 		ctx = IS_get_ctx(IS_conn->ctx_pools[cb_index]);
 	}
+
+#ifdef IS_GUI
+	ctx->ts = ts;
+#endif
 
 	ctx->req = req;
 	ctx->chunk_index = chunk_index; //chunk_index in cb
@@ -219,7 +226,11 @@ void mem_gather(char *rdma_buf, struct request *req)
 	}
 }
 
+#ifdef IS_GUI
+int IS_rdma_write(struct IS_connection *IS_conn, struct kernel_cb *cb, int cb_index, int chunk_index, struct remote_chunk_g *chunk, unsigned long offset, unsigned long len, struct request *req, struct IS_queue *q, struct timespec ts)
+#else
 int IS_rdma_write(struct IS_connection *IS_conn, struct kernel_cb *cb, int cb_index, int chunk_index, struct remote_chunk_g *chunk, unsigned long offset, unsigned long len, struct request *req, struct IS_queue *q)
+#endif
 {
 	int ret;
 	struct ib_send_wr *bad_wr;	
@@ -243,6 +254,10 @@ int IS_rdma_write(struct IS_connection *IS_conn, struct kernel_cb *cb, int cb_in
 		IS_conn = IS_conn->IS_sess->IS_conns[conn_id];
 		ctx = IS_get_ctx(IS_conn->ctx_pools[cb_index]);
 	}
+
+#ifdef IS_GUI
+	ctx->ts = ts;
+#endif	
 
 	ctx->req = req;
 	ctx->cb = cb;
@@ -362,24 +377,41 @@ static int IS_send_done(struct kernel_cb *cb, int num)
 	return 0;
 }
 
+#ifdef IS_GUI
+int IS_transfer_chunk(struct IS_file *xdev, struct kernel_cb *cb, int cb_index, int chunk_index, struct remote_chunk_g *chunk, unsigned long offset,
+		  unsigned long len, int write, struct request *req,
+		  struct IS_queue *q, struct timespec ts)
+#else
 int IS_transfer_chunk(struct IS_file *xdev, struct kernel_cb *cb, int cb_index, int chunk_index, struct remote_chunk_g *chunk, unsigned long offset,
 		  unsigned long len, int write, struct request *req,
 		  struct IS_queue *q)
+#endif
 {
 	struct IS_connection *IS_conn = q->IS_conn;
 	int cpu, retval = 0;
 
 	cpu = get_cpu();
-	
+
+#ifdef IS_GUI
+	add_remote_request();
+#endif
 
 	if (write){
-		retval = IS_rdma_write(IS_conn, cb, cb_index, chunk_index, chunk, offset, len, req, q); 
+#ifdef IS_GUI
+		retval = IS_rdma_write(IS_conn, cb, cb_index, chunk_index, chunk, offset, len, req, q, ts); 
+#else 
+		retval = IS_rdma_write(IS_conn, cb, cb_index, chunk_index, chunk, offset, len, req, q);
+#endif
 		if (unlikely(retval)) {
 			pr_err("failed to map sg\n");
 			goto err;
 		}
 	}else{
-		retval = IS_rdma_read(IS_conn, cb, cb_index, chunk_index, chunk, offset, len, req, q); 
+#ifdef IS_GUI
+		retval = IS_rdma_read(IS_conn, cb, cb_index, chunk_index, chunk, offset, len, req, q, ts); 
+#else
+		retval = IS_rdma_read(IS_conn, cb, cb_index, chunk_index, chunk, offset, len, req, q);
+#endif
 		if (unlikely(retval)) {
 			pr_err("failed to map sg\n");
 			goto err;
@@ -814,8 +846,19 @@ static int client_read_done(struct kernel_cb * cb, struct ib_wc *wc)
 {
 	struct rdma_ctx *ctx;
 	struct request *req;
+#ifdef IS_GUI
+	struct timespec end_ts;
+#endif
 
 	ctx = (struct rdma_ctx *)ptr_from_uint64(wc->wr_id);
+
+#ifdef IS_GUI
+	//calculate the request latency
+	getnstimeofday(&end_ts);
+	unsigned long long latency = (end_ts.tv_sec - ctx->ts.tv_sec) * 1000000000 + (end_ts.tv_nsec - ctx->ts.tv_nsec);
+	add_latency(latency, (u8) cb->cb_index, 0);
+#endif
+
 	atomic_set(&ctx->in_flight, CTX_IDLE);
 	ctx->chunk_index = -1;
 	req = ctx->req;
@@ -840,11 +883,21 @@ static int client_write_done(struct kernel_cb * cb, struct ib_wc *wc)
 {
 	struct rdma_ctx *ctx=NULL;
 	struct request *req=NULL;
+#ifdef IS_GUI
+	struct timespec end_ts;
+#endif
 
 	ctx = (struct rdma_ctx *)ptr_from_uint64(wc->wr_id);	
 	if (ctx->chunk_ptr == NULL){
 		return 0;
 	}
+
+#ifdef IS_GUI
+	//calculate the request latency
+	getnstimeofday(&end_ts);
+	unsigned long long latency = (end_ts.tv_sec - ctx->ts.tv_sec) * 1000000000 + (end_ts.tv_nsec - ctx->ts.tv_nsec);
+	add_latency(latency, (u8) cb->cb_index, 1);
+#endif
 
 	atomic_set(&ctx->in_flight, CTX_IDLE);
 	IS_bitmap_group_set(ctx->chunk_ptr->bitmap_g, ctx->offset, ctx->len);
@@ -916,6 +969,7 @@ static void rdma_cq_event_handler(struct ib_cq * cq, void *ctx)
 				break;
 			case IB_WC_RDMA_READ:
 				ret = client_read_done(cb, &wc);
+				pr_info("client read done\n");
 				if (ret) {
 					printk(KERN_ERR PFX "read wc error: %d, cb->state=%d\n", ret, cb->state);
 					goto error;
@@ -923,6 +977,7 @@ static void rdma_cq_event_handler(struct ib_cq * cq, void *ctx)
 				break;
 			case IB_WC_RDMA_WRITE:
 				ret = client_write_done(cb, &wc);
+				pr_info("client write done\n");
 				if (ret) {
 					printk(KERN_ERR PFX "write wc error: %d, cb->state=%d\n", ret, cb->state);
 					goto error;
@@ -1264,6 +1319,10 @@ static int rdma_trigger(void *data)
 	}
 
 	while (1) {
+		// if (IS_sess->destroy){
+		if (kthread_should_stop()){
+			break;
+		}
 		for (i=0; i<STACKBD_SIZE_G; i++){
 			spin_lock_irq(&IS_sess->write_ops_lock[i]);
 			cur_write_ops = IS_sess->write_ops[i];
@@ -1280,6 +1339,7 @@ static int rdma_trigger(void *data)
 				if (atomic_read(&IS_sess->trigger_enable) == TRIGGER_ON){
 					if (atomic_read(IS_sess->cb_index_map + i) == NO_CB_MAPPED ){
 						do {
+							pr_info("trigger a slab mapping\n");
 							map_res = IS_single_chunk_map(IS_sess, i);
 							map_count += 1;
 						} while (map_res == -1 && map_count < 1);
@@ -1335,6 +1395,9 @@ void IS_destroy_device(struct IS_session *IS_session,
                          struct IS_file *IS_file)
 {
 	pr_info("%s\n", __func__);
+
+	IS_session->destroy = 1;
+	kthread_stop(IS_session->rdma_trigger_thread);
 
 	IS_set_device_state(IS_file, DEVICE_OFFLINE);
 	if (IS_file->disk){
@@ -1689,6 +1752,7 @@ int IS_single_chunk_map(struct IS_session *IS_session, int select_chunk)
 		wake_up_process(tmp_cb->remote_chunk.evict_handle_thread);	
 	}
 	IS_send_bind_single(tmp_cb, need_chunk);
+	pr_info("select chunk: %d\n", need_chunk);
 	wait_event_interruptible(tmp_cb->sem, tmp_cb->state == WAIT_OPS);
 	atomic_set(&IS_session->rdma_on, DEV_RDMA_ON); 
 	return need_chunk;
@@ -1704,6 +1768,7 @@ int IS_session_create(const char *portal, struct IS_session *IS_session)
 	pr_err("%s\n", IS_session->portal);
 	portal_parser(IS_session);
 
+	IS_session->destroy = 0;
 	IS_session->capacity_g = STACKBD_SIZE_G; 
 	IS_session->capacity = (unsigned long long)STACKBD_SIZE_G * ONE_GB;
 	IS_session->mapped_cb_num = 0;
@@ -1761,6 +1826,9 @@ int IS_session_create(const char *portal, struct IS_session *IS_session)
 
 	strcpy(name, "rdma_trigger_thread");
 	IS_session->rdma_trigger_thread = kthread_create(rdma_trigger, IS_session, name);
+	#ifdef IS_GUI
+	kthread_run(write_info, NULL, "write_info_thread");
+	#endif
 
 	return 0;
 

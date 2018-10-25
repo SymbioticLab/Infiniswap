@@ -6,11 +6,16 @@
 
 #include "rdma-common.h"
 
+#ifdef IS_GUI
+static int control_msg_listen();
+#endif 
+
 static int on_connect_request(struct rdma_cm_id *id);
 static int on_connection(struct rdma_cm_id *id);
 static int on_disconnect(struct rdma_cm_id *id);
 static int on_event(struct rdma_cm_event *event);
 static void usage(const char *argv0);
+int control_msg_listen_port = 11006;
 long page_size;
 int running;
 int main(int argc, char **argv)
@@ -43,8 +48,13 @@ int main(int argc, char **argv)
   //free
   running = 1;
   TEST_NZ(pthread_create(&free_mem_thread, NULL, (void *)free_mem, NULL));
+#ifdef IS_GUI
+  pthread_create(&control_msg_listen_thread, NULL, (void *)control_msg_listen, NULL);
+#endif
 
-  while (rdma_get_cm_event(ec, &event) == 0) {
+  while (rdma_get_cm_event(ec, &event) == 0)
+  {
+    printf("rdma_get_cm_event\n");
     struct rdma_cm_event event_copy;
 
     memcpy(&event_copy, event, sizeof(*event));
@@ -60,14 +70,72 @@ int main(int argc, char **argv)
   return 0;
 }
 
+#ifdef IS_GUI
+int control_msg_listen()
+{
+  int sock = socket(AF_INET, SOCK_STREAM, 0);
+
+  if (sock == -1)
+  {
+    printf("cannot open stream socket!\n");
+    exit(1);
+  }
+
+  int on = 1;
+  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+
+  //bind ip and port number to the socket
+  struct sockaddr_in addr;
+  memset(&addr, 0, sizeof(addr));
+  addr.sin_family = AF_INET;
+  addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+  addr.sin_port = htons(control_msg_listen_port);
+  bind(sock, (struct sockaddr *)&addr, sizeof(addr));
+  socklen_t length = sizeof(addr);
+  if (getsockname(sock, (struct sockaddr *)&addr, &length) == -1)
+  {
+    exit(1);
+  }
+
+  listen(sock, 10);
+
+  while (1)
+  {
+    int msgsock = accept(sock, (struct sockaddr *)0, (socklen_t *)0);
+    if (msgsock == -1)
+    {
+      printf("Error: accept socket connection\n");
+    }
+    else
+    {
+      struct control_msg msg;
+      recv(msgsock, &msg, sizeof(msg), MSG_WAITALL);
+      printf("Receive control message: %s\n", msg.cmd);
+    }
+  }
+
+  return sock;
+}
+#endif
+
 int on_connect_request(struct rdma_cm_id *id)
 {
   struct rdma_conn_param cm_params;
 
   printf("received connection request.\n");
-  build_connection(id);
+  struct connection *conn = build_connection(id);
   build_params(&cm_params);
   TEST_NZ(rdma_accept(id, &cm_params));
+
+  //get connection ip
+  struct sockaddr *dst_addr = rdma_get_peer_addr(id);
+  struct sockaddr_in *dst_in = (struct sockaddr_in *)dst_addr;
+  char *dst_ip = inet_ntoa(dst_in->sin_addr);
+  if (conn)
+  {
+    printf("conn: %d, ip address: %s\n", conn->conn_index, dst_ip);
+    strcpy(conn->bd_ip, dst_ip);
+  }
 
   return 0;
 }
