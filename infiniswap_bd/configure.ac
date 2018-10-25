@@ -35,7 +35,7 @@ AC_ARG_ENABLE([max_page_num],
 [User specifies the max page number in a single struct request (swap IO request), default is 1 (<4.4.0), 32 (>=4.4.0)])],
 [user_max_page_num=${enableval}], [user_max_page_num=1])
 
-AC_DEFINE_UNQUOTED([USER_MAX_PAGE_NUM], [${user_max_page_num}], [the max page number in a single struct request (swap IO request)])
+AC_DEFINE_UNQUOTED([USER_MAX_PAGE_NUM], [${user_max_page_num}], [the max page number in a single struct request (swap IO request), MAX_SGL_LEN])
 
 
 AC_ARG_ENABLE([bio_page_cap],
@@ -51,7 +51,7 @@ AC_ARG_ENABLE([max_remote_memory],
 [User defines the max remote memory size from one server, default is 32])],
 [user_max_remote_memory=${enableval}], [user_max_remote_memory=32])
 
-AC_DEFINE_UNQUOTED([USER_MAX_REMOTE_MEMORY], [${user_max_remote_memory}], [the max remote memory size from one server, default is 32])
+AC_DEFINE_UNQUOTED([USER_MAX_REMOTE_MEMORY], [${user_max_remote_memory}], [the max remote memory size from one server (MAX_MR_SIZE_GB), default is 32])
 
 
 AC_ARG_ENABLE([stackbd_size],
@@ -83,7 +83,7 @@ AC_ARG_ENABLE([num_server_select],
 [User defines the number of queried server in looking for remote memory, default is 1])],
 [user_num_server_select="${enableval}"], [user_num_server_select=1])
 
-AC_DEFINE_UNQUOTED([USER_NUM_SERVER_SELECT], [${user_num_server_select}], [the number of queried server in looking for remote memory, default is 1])
+AC_DEFINE_UNQUOTED([USER_NUM_SERVER_SELECT], [${user_num_server_select}], [the number of queried server in looking for remote memory (SERVER_SELECT_NUM), default is 1])
 
 AC_CONFIG_HEADERS([config.h])
 
