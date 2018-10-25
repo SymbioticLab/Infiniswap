@@ -1,4 +1,4 @@
-AC_INIT([xio-kernel],[2.0],[libxio@accellio.org])
+AC_INIT([infiniswap block device],[0.1],[infiniswap@umich.edu], [], [https://github.com/SymbioticLab/infiniswap])
 
 AC_PROG_INSTALL
 
@@ -18,6 +18,74 @@ AC_ARG_WITH(kernel-build,
 [kernelbuild="$withval"])
 AC_ARG_ENABLE(kernel-module,
 [  --enable-kernel-module  Compile kernel module ])
+
+dnl user-defined arguments and MACROs
+AC_ARG_ENABLE([lookup_bdev],
+[AS_HELP_STRING([--enable-lookup_bdev],
+[Kernel has the patch for lookup_bdev (https://www.redhat.com/archives/dm-devel/2016-April/msg00372.html); Disabled by default])],
+[have_lookup_bdev_patch=yes], [have_lookup_bdev_patch=no])
+
+if [test $have_lookup_bdev_patch = yes]; then 
+  AC_DEFINE([HAVE_LOOKUP_BDEV_PATCH], [], [Have the kernel patch for lookup_bdev()
+  https://www.redhat.com/archives/dm-devel/2016-April/msg00372.html])
+fi
+
+AC_ARG_ENABLE([max_page_num],
+[AS_HELP_STRING([--enable-max_page_num],
+[User specifies the max page number in a single struct request (swap IO request), default is 1 (<4.4.0), 32 (>=4.4.0)])],
+[user_max_page_num=${enableval}], [user_max_page_num=1])
+
+AC_DEFINE_UNQUOTED([USER_MAX_PAGE_NUM], [${user_max_page_num}], [the max page number in a single struct request (swap IO request), MAX_SGL_LEN])
+
+
+AC_ARG_ENABLE([bio_page_cap],
+[AS_HELP_STRING([--enable-bio_page_cap],
+[User specifies the max page number in a single bio request, default is 32])],
+[user_bio_page_cap=${enableval}], [user_bio_page_cap=32])
+
+AC_DEFINE_UNQUOTED([USER_BIO_PAGE_CAP], [${user_bio_page_cap}], [the max page number in a single bio request, default is 32])
+
+
+AC_ARG_ENABLE([max_remote_memory],
+[AS_HELP_STRING([--enable-max_remote_memory],
+[User defines the max remote memory size from one server, default is 32])],
+[user_max_remote_memory=${enableval}], [user_max_remote_memory=32])
+
+AC_DEFINE_UNQUOTED([USER_MAX_REMOTE_MEMORY], [${user_max_remote_memory}], [the max remote memory size from one server (MAX_MR_SIZE_GB), default is 32])
+
+
+AC_ARG_ENABLE([stackbd_size],
+[AS_HELP_STRING([--enable-stackbd_size],
+[User defines the size of stackbd (backup) disk which should be >= the size of remote memory, default is 12])],
+[user_stackbd_size=${enableval}], [user_stackbd_size=12])
+
+AC_DEFINE_UNQUOTED([USER_STACKBD_SIZE], [${user_stackbd_size}], [stackbd (backup) disk size], default is 12)
+
+
+AC_ARG_ENABLE([stackbd_name],
+[AS_HELP_STRING([--enable-stackbd_name],
+[User defines the name of stackbd (backup) disk, default is "stackbd"])],
+[user_stackbd_name="${enableval}"], [user_stackbd_name="stackbd"])
+
+AC_DEFINE_UNQUOTED([USER_STACKBD_NAME], ["${user_stackbd_name}"], [the name of stackbd disk], default is "stackbd")
+
+
+AC_ARG_ENABLE([backup_disk],
+[AS_HELP_STRING([--enable-backup_disk],
+[User specifies which physical disk partition will be used for backup, default is "/dev/sda4"])],
+[user_backup_disk="${enableval}"], [user_backup_disk="/dev/sda4"])
+
+AC_DEFINE_UNQUOTED([USER_BACKUP_DISK], ["${user_backup_disk}"], [the name of physical backup disk, default is "/dev/sda4"])
+
+
+AC_ARG_ENABLE([num_server_select],
+[AS_HELP_STRING([--enable-num_server_select],
+[User defines the number of queried server in looking for remote memory, default is 1])],
+[user_num_server_select="${enableval}"], [user_num_server_select=1])
+
+AC_DEFINE_UNQUOTED([USER_NUM_SERVER_SELECT], [${user_num_server_select}], [the number of queried server in looking for remote memory (SERVER_SELECT_NUM), default is 1])
+
+AC_CONFIG_HEADERS([config.h])
 
 #build against installed OFED
 RDMA_SYMVERS=`pwd`/Module.symvers
@@ -55,10 +123,10 @@ else
 AC_MSG_RESULT(no)
 
 # Whether or not the OFED kernel-ib-devel RPM has been installed.
-OFED_KERNEL_IB_DEVEL_RPM_INSTALLED=`if rpm -q kernel-ib-devel 2>/dev/null | grep -q $$(uname -r | sed 's/-/_/g'); then echo true; else echo false; fi`
+OFED_KERNEL_IB_DEVEL_RPM_INSTALLED=`if rpm -q kernel-ib-devel 2>/dev/null | grep -q $(uname -r | sed 's/-/_/g'); then echo true; else echo false; fi`
 
 # Whether or not the OFED compat-rdma-devel RPM has been installed.
-OFED_COMPAT_RDMA_DEVEL_RPM_INSTALLED=`if rpm -q compat-rdma-devel 2>/dev/null | grep -q $$(uname -r | sed 's/-/_/g'); then echo true; else echo false; fi`
+OFED_COMPAT_RDMA_DEVEL_RPM_INSTALLED=`if rpm -q compat-rdma-devel 2>/dev/null | grep -q $(uname -r | sed 's/-/_/g'); then echo true; else echo false; fi`
 
 if test "$OFED_KERNEL_IB_DEVEL_RPM_INSTALLED" = "true"; then
 # Read OFED's config.mk, which contains the definition of the variable
