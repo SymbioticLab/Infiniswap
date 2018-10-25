@@ -42,6 +42,7 @@
 #ifndef INFINISWAP_H
 #define INFINISWAP_H
 
+
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/kthread.h>
@@ -90,7 +91,13 @@
 #include <linux/hdreg.h>
 #include <trace/events/block.h>
 
+#include "dashboard.h"
 #include "config.h"
+
+// GUI option
+#ifdef USER_NEED_GUI
+	#define IS_GUI
+#endif
 
 // from NBDX
 #define SUBMIT_BLOCK_SIZE				\
@@ -440,7 +447,10 @@ enum IS_dev_state {
 struct rdma_ctx {
 	struct IS_connection *IS_conn;
 	struct free_ctx_pool *free_ctxs;  //or this one
-	//struct mutex ctx_lock;	
+#ifdef IS_GUI
+	struct timespec ts;
+#endif
+	//struct mutex ctx_lock;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
 	struct ib_rdma_wr rdma_sq_wr;	/* rdma work request record */
 #else
@@ -517,6 +527,8 @@ enum cb_state {
 #endif
 
 struct IS_session {
+	int destroy; // 0 running, 1 destroyed
+
 	// Nov19 request distribution
 	unsigned long int *read_request_count;	//how many requests on each CPU
 	unsigned long int *write_request_count;	//how many requests on each CPU
@@ -620,9 +632,16 @@ extern int IS_major;
 extern int IS_indexes;
 
 int IS_single_chunk_map(struct IS_session *IS_session, int i);
+#ifdef IS_GUI
 int IS_transfer_chunk(struct IS_file *xdev, struct kernel_cb *cb, int cb_index, int chunk_index, struct remote_chunk_g *chunk, unsigned long offset,
 		  unsigned long len, int write, struct request *req,
-		  struct IS_queue *q);
+		  struct IS_queue *q, struct timespec ts);
+#else
+int IS_transfer_chunk(struct IS_file *xdev, struct kernel_cb *cb, int cb_index, int chunk_index, struct remote_chunk_g *chunk, unsigned long offset,
+		  unsigned long len, int write, struct request *req,
+		  struct IS_queue *q); 
+#endif 
+
 int IS_session_create(const char *portal, struct IS_session *IS_session);
 void IS_session_destroy(struct IS_session *IS_session);
 int IS_create_device(struct IS_session *IS_session,

@@ -63,6 +63,15 @@ AC_ARG_ENABLE([measured_free_mem_weight],
 
 AC_DEFINE_UNQUOTED([USER_MEASURED_FREE_MEM_WEIGHT], [${user_measured_free_mem_weight}], [the weight of measured free memory in the weighted moving average for current free memory calculation (CURR_FREE_MEM_WEIGHT), default is 0.7])
 
+AC_ARG_ENABLE([gui],
+[AS_HELP_STRING([--enable-gui],
+[Turn on GUI (dashboard) for infiniswap daemon, default is turned off])],
+[need_gui=yes], [need_gui=no])
+
+if [test $need_gui = yes]; then 
+  AC_DEFINE([USER_NEED_GUI], [], [Turn on GUI (dashboard) for infiniswap daemon])
+fi
+
 
 # Checks for programs.
 AC_PROG_CC

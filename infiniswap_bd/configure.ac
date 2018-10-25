@@ -85,6 +85,17 @@ AC_ARG_ENABLE([num_server_select],
 
 AC_DEFINE_UNQUOTED([USER_NUM_SERVER_SELECT], [${user_num_server_select}], [the number of queried server in looking for remote memory (SERVER_SELECT_NUM), default is 1])
 
+
+AC_ARG_ENABLE([gui],
+[AS_HELP_STRING([--enable-gui],
+[Turn on GUI (dashboard) for infiniswap bd, default is turned off])],
+[need_gui=yes], [need_gui=no])
+
+if [test $need_gui = yes]; then 
+  AC_DEFINE([USER_NEED_GUI], [], [Turn on GUI (dashboard) for infiniswap bd])
+fi
+
+
 AC_CONFIG_HEADERS([config.h])
 
 #build against installed OFED

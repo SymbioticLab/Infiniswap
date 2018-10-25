@@ -422,8 +422,19 @@ void IS_mq_request_stackbd2(struct request *req)
     stackbd_make_request4(stackbd.queue, req);
 }
 
+int total_request = 0;
+int remote_request = 0;
+
 static int IS_request(struct request *req, struct IS_queue *xq)
 {
+#ifdef IS_GUI
+	struct timespec ts;
+	total_request++;
+	add_request();
+	//record the starting time of receiving the request
+	getnstimeofday(&ts);
+#endif
+
 	struct IS_file *xdev = req->rq_disk->private_data;
 	int write = rq_data_dir(req) == WRITE;
 	unsigned long start = blk_rq_pos(req) << IS_SECT_SHIFT;
@@ -512,7 +523,11 @@ static int IS_request(struct request *req, struct IS_queue *xq)
 		if (atomic_read(&IS_sess->rdma_on) == DEV_RDMA_ON){
 		
 			if (status == 1){//single chunk
+#ifdef IS_GUI
+				err = IS_transfer_chunk(xdev, cb, cb_index, chunk_index, chunk, chunk_offset, len, write, req, xq, ts);
+#else
 				err = IS_transfer_chunk(xdev, cb, cb_index, chunk_index, chunk, chunk_offset, len, write, req, xq);
+#endif
 			}else{//two chunks (won't be executed)
 				IS_mq_request_stackbd(req);
 			}
@@ -523,7 +538,11 @@ static int IS_request(struct request *req, struct IS_queue *xq)
 		if (atomic_read(&IS_sess->rdma_on) == DEV_RDMA_ON){
 			bitmap_i = (int)(chunk_offset / IS_PAGE_SIZE);
 			if (IS_bitmap_test(chunk->bitmap_g, bitmap_i)){ //remote recorded
-				err = IS_transfer_chunk(xdev, cb, cb_index, chunk_index, chunk, chunk_offset, len, write, req, xq);
+#ifdef IS_GUI
+				err = IS_transfer_chunk(xdev, cb, cb_index, chunk_index, chunk, chunk_offset, len, write, req, xq, ts);
+#else
+				err = IS_transfer_chunk(xdev, cb, cb_index, chunk_index, chunk, chunk_offset, len, write, req, xq);	
+#endif
 			}else {
 				IS_mq_request_stackbd(req);	
 			}
@@ -545,6 +564,7 @@ static int IS_queue_rq(struct blk_mq_hw_ctx *hctx, struct request *rq, bool last
 static int IS_queue_rq(struct blk_mq_hw_ctx *hctx, struct request *rq)
 #endif
 {
+
 	struct IS_queue *IS_q;
 	int err;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)

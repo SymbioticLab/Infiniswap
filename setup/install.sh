@@ -5,10 +5,15 @@ if  [ ! -n "$1" ] ;then
     exit 2
 fi
 
+#user needs the GUI (dashboard)
+#(USER_NEED_GUI), default is turned off (0)
+user_need_gui=0
+
 # block device options
 #have the kernel patch for lookup_bdev()
 #(HAVE_LOOKUP_BDEV_PATCH), default is undefined
 have_lookup_bdev_patch=0
+
 
 #max page number in a single struct request (swap IO request),
 #(MAX_SGL_LEN), default is 1 (<4.4.0), 32 (>=4.4.0)
@@ -81,6 +86,11 @@ if [ ${have_lookup_bdev_patch} -gt 0 ];then
     --enable-lookup_bdev"
 fi
 
+if [ ${user_need_gui} -gt 0 ];then
+    bd_options="${bd_options} \
+    --enable-gui"
+fi
+
 daemon_options="--enable-max_client=${max_client} \
     --enable-max_remote_memory=${max_remote_memory} \
     --enable-remote_memory_evict=${remote_memory_evict} \
@@ -88,6 +98,12 @@ daemon_options="--enable-max_client=${max_client} \
     --enable-evict_hit_limit=${evict_hit_limit} \
     --enable-expand_hit_limit=${expand_hit_limit} \
     --enable-measured_free_mem_weight=${measured_free_mem_weight}"
+
+if [ ${user_need_gui} -gt 0 ];then
+    daemon_options="${daemon_options} \
+    --enable-gui"
+fi
+
 
 # build infiniswap block device
 if [ $1 == "bd" ]; then
@@ -99,12 +115,8 @@ cd ../infiniswap_bd
 make 
 sudo make install
 echo "....... done"
-exit 1
-fi
-
-
 #build infiniswap daemon
-if [ $1 == "daemon" ]; then
+elif [ $1 == "daemon" ]; then
 echo "........ install infiniswap daemon, options:"
 echo "${daemon_options}"
 cd ../infiniswap_daemon
@@ -112,5 +124,4 @@ cd ../infiniswap_daemon
 ./configure ${daemon_options}
 make 
 echo "....... done"
-exit 1
 fi
