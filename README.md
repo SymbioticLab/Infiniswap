@@ -30,58 +30,86 @@ The Infiniswap codebase is organized under three directories.
 
 * `infiniswap_bd`: Infiniswap block device (kernel module).
 * `infiniswap_daemon`: Infiniswap daemon (user-level process) that exposes its local memory as remote memory.
-* `setup`: setup scripts.
+* `setup`: scripts for setup and installation.
 
 Important Parameters
 -----------
 
-Some important parameters in Infiniswap:  
+There are several important parameters to configure in Infiniswap:  
 
-* `infiniswap_bd/infiniswap.h`
-  * `BACKUP_DISK` [disk partition]  
+* Infiniswap block device (in `infiniswap_bd/infiniswap.h`)
+  1. `BACKUP_DISK` [disk partition]  
     It's the name of the backup disk in Infiniswap block device.  
     How to check the disk partition status and list?  
       "sudo fdisk -l"   
-  * `STACKBD_SIZE_G` [size in GB]  
+  2. `STACKBD_SIZE_G` [size in GB]  
     It defines the size of Infiniswap block device (also backup disk).   
-  * `MAX_SGL_LEN` [num of pages]  
+  3. `MAX_SGL_LEN` [num of pages]  
     It specifies how many pages can be included in a single swap-out request (IO request).  
-  * `BIO_PAGE_CAP` [num of pages]  
+  4. `BIO_PAGE_CAP` [num of pages]  
     It limits the maximum value of MAX_SGL_LEN.  
-  * `MAX_MR_SIZE_GB` [size]  
+  5. `MAX_MR_SIZE_GB` [size]  
     It sets the maximum number of slabs from a single Infiniswap daemon. Each slab is 1GB.
-```c
-// example, in "infiniswap.h" 
-#define BACKUP_DISK "/dev/sda4"  
-#define STACKBD_SZIE_G 12  // 12GB
-#define MAX_SGL_LEN 32  // 32 x 4KB = 128KB, it's the max size for a single "struct bio" object.
-#define BIO_PAGE_CAP 32
-#define MAX_MR_SIZE_GB 32 //this infiniswap block device can get 32 slabs from each infiniswap daemon.
-```
+  ```c
+  // example, in "infiniswap.h" 
+  #define BACKUP_DISK "/dev/sda4"  
+  #define STACKBD_SZIE_G 12  // 12GB
+  #define MAX_SGL_LEN 32  // 32 x 4KB = 128KB, it's the max size for a single "struct bio" object.
+  #define BIO_PAGE_CAP 32
+  #define MAX_MR_SIZE_GB 32 //this infiniswap block device can get 32 slabs from each infiniswap daemon.
+  ```
 
-* `infiniswap_daemon/rdma-common.h`
-  * `MAX_FREE_MEM_GB` [size]   
-    It is the maximum size (in GB) of remote memory this daemon can provide (from free memory of the local host).     
-  * `MAX_MR_SIZE_GB` [size]   
-    It limits the maximum number of slabs this daemon can provide to a single infiniswap block device.   
-    This value should be the same of "MAX_MR_SIZE_GB" in "infiniswap.h".    
-  * `MAX_CLIENT` [number]   
-    It defines how many infiniswap block devices a single daemon can connect to.     
-  * `FREE_MEM_EVICT_THRESHOLD` [size in GB]   
-    This is the "HeadRoom" mentioned in our paper.   
-    When the remaining free memory of the host machines is lower than this threshold, infiniswap daemon will start to evict mapped slabs.     
-```c
-// example, in "rdma-common.h" 
-#define MAX_CLIENT 32     
+* Infiniswap daemon (in `infiniswap_daemon/rdma-common.h`)
+  1. `MAX_FREE_MEM_GB` [size]   
+     It is the maximum size (in GB) of remote memory this daemon can provide (from free memory of the local host).     
+  2. `MAX_MR_SIZE_GB` [size]   
+     It limits the maximum number of slabs this daemon can provide to a single infiniswap block device.   
+     This value should be the same of "MAX_MR_SIZE_GB" in "infiniswap.h".    
+  3. `MAX_CLIENT` [number]   
+     It defines how many infiniswap block devices a single daemon can connect to.     
+  4. `FREE_MEM_EVICT_THRESHOLD` [size in GB]   
+     This is the "HeadRoom" mentioned in our paper.   
+     When the remaining free memory of the host machines is lower than this threshold, infiniswap daemon will start to evict mapped slabs.     
+  ```c
+  // example, in "rdma-common.h" 
+  #define MAX_CLIENT 32     
 
-/* Followings should be assigned based on 
- * memory information (DRAM capacity, regular memory usage, ...) 
- * of the host machine of infiniswap daemon.    
- */
-#define MAX_FREE_MEM_GB 32    
-#define MAX_MR_SIZE_GB  32    
-#define FREE_MEM_EVICT_THRESHOLD 8    
-```
+  /* Followings should be assigned based on 
+  * memory information (DRAM capacity, regular memory usage, ...) 
+  * of the host machine of infiniswap daemon.    
+  */
+  #define MAX_FREE_MEM_GB 32    
+  #define MAX_MR_SIZE_GB  32    
+  #define FREE_MEM_EVICT_THRESHOLD 8    
+  ```
+
+#### How to configure those parameters?
+  * If you use the provided installation script (``setup/install.sh``)
+  You can configure those parameters by changing the value of the variables in ``setup/install.sh`` before installation. 
+  In ``setup/install.sh``, the definition of the variable and which parameter it maps to have been declared. You can edit its value as needed. For example,
+    ```bash
+    #stackbd (backup) disk size, also the total size of remote memory of this bd
+    #(STACKBD_SIZE), default is 12
+    stackbd_size=12
+    ```
+
+  * If you choose to [build Infiniswap manually](#build), you need to add configuration options to ``configure`` command.<span id="config"></span>
+    You can get the definitions of those options by
+    ```bash
+    # after ./autogen.sh
+    ./configure --help
+    ```
+    See its ``Optional Features``, like:
+    ```
+    --enable-stackbd_size   User defines the size of stackbd (backup) disk which
+                            should be >= the size of remote memory, default is
+                            12
+    ```
+
+    For example, if your Infiniswap block device has 24GB space in both its backup disk and remote memory, you need to
+    ```bash
+    ./configure --enable-stackbd_size=24
+    ``` 
 
 How to Build and Install
 -----------
@@ -99,19 +127,40 @@ cd setup
 # M1:192.168.0.11, M2:192.168.0.12
 sudo ./ib_setup.sh 192.168.0.11
 ```
+
 2. Compile infiniswap daemon on M2:
 ```bash  
-cd infiniswap_daemon
-make
+cd setup
+# edit the parameters in install.sh 
+./install.sh daemon
 ```
+
 3. Install infiniswap block device on M1:  
 ```bash  	
-cd infiniswap_bd  
-./autogen.sh
-./configure
-make  
-sudo make install
+cd setup
+# edit the parameters in install.sh
+./install.sh bd
 ```
+#### Or, how to manually build Infiniswap? <span id="build"></span>
+  * Infiniswap daemon  
+  ```bash  	
+  cd infiniswap_daemon
+  ./autogen.sh
+  ./configure [options] 
+  make
+  ``` 
+
+  * Infiniswap block device
+  ```bash  	
+  cd infiniswap_bd
+  ./autogen.sh
+  ./configure [options] 
+  make
+  sudo make install
+  ``` 
+
+  If you want to change the parameters of Infiniswap, you can add options when executing ``configure``. 
+  Please read [how to add configure options](#config) for details.
 
 How to Run
 -----------
@@ -203,8 +252,14 @@ When you use Mellanox OFED, you need to compile/link against OFED headers/module
 This should be handled by configure file, and refer the Makefile that links OFED modules.
 
 4. Others issues about compatibility
-    1. `lookup_bdev()` has two arguments in the [kernel patch](https://www.redhat.com/archives/dm-devel/2016-April/msg00372.html)
-      Turn on `LOOKUP_BDEV_PATCH` at line 49 in ``is_mq.c`` if your OS has this patch; otherwise, just comment it out.
+    * `lookup_bdev()` has different input arguments in the [kernel patch](https://www.redhat.com/archives/dm-devel/2016-April/msg00372.html).
+      By default, we assume the patch is **not installed**. If you OS has this patch, you should:
+        * If you use ``setup/install.sh``, please set 
+          ```bash
+          # setup/install.sh
+          have_lookup_bdev_patch=1  #the default value is 0.
+          ```
+        * **Or,  if you build ``infiniswap_bd`` manually**, add ``--enable-lookup_bdev`` in the configuration step.
 
 
     

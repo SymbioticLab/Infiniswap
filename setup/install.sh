@@ -42,7 +42,7 @@ num_server_select=1
 
 # daemon options
 #how many block devices a single daemon can connect to
-#default is 32
+#(MAX_CLIENT), default is 32
 max_client=32
 
 #maximum size (in GB) of remote memory this daemon can provide
