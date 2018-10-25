@@ -35,7 +35,7 @@ AC_DEFINE_UNQUOTED([USER_REMOTE_MEMORY_EVICT], [${user_remote_memory_evict}], [t
 AC_ARG_ENABLE([evict_hit_limit],
 [AS_HELP_STRING([--enable-evict_hit_limit],
 [User defines the limit of hitting evict_threshold before triggering eviction, default is 1])],
-[user_evict_hit_count=${enableval}], [user_evict_hit_limit=1])
+[user_evict_hit_limit=${enableval}], [user_evict_hit_limit=1])
 
 AC_DEFINE_UNQUOTED([USER_EVICT_HIT_LIMIT], [${user_evict_hit_limit}], [the limit of hitting evict_threshold before triggering eviction (MEM_EVICT_HIT_THRESHOLD), default is 1])
 
@@ -51,7 +51,7 @@ AC_DEFINE_UNQUOTED([USER_REMOTE_MEMORY_EXPAND], [${user_remote_memory_expand}], 
 AC_ARG_ENABLE([expand_hit_limit],
 [AS_HELP_STRING([--enable-expand_hit_limit],
 [User defines the limit of hitting expand_threshold before triggering expansion, default is 20])],
-[user_expand_hit_count=${enableval}], [user_expand_hit_limit=20])
+[user_expand_hit_limit=${enableval}], [user_expand_hit_limit=20])
 
 AC_DEFINE_UNQUOTED([USER_EXPAND_HIT_LIMIT], [${user_expand_hit_limit}], [the limit of hitting expand_threshold before triggering expansion (MEM_EXPAND_HIT_THRESHOLD), default is 20])
 
