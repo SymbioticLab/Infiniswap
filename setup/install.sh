@@ -99,12 +99,8 @@ cd ../infiniswap_bd
 make 
 sudo make install
 echo "....... done"
-exit 1
-fi
-
-
 #build infiniswap daemon
-if [ $1 == "daemon" ]; then
+elif [ $1 == "daemon" ]; then
 echo "........ install infiniswap daemon, options:"
 echo "${daemon_options}"
 cd ../infiniswap_daemon
@@ -112,5 +108,4 @@ cd ../infiniswap_daemon
 ./configure ${daemon_options}
 make 
 echo "....... done"
-exit 1
 fi

@@ -165,67 +165,70 @@ cd setup
 How to Run
 -----------
 1. Start infiniswap daemon on M2:  
-```bash  	
-cd infiniswap_daemon   
-# ./infiniswap-daemon <ip> <port> 
-# pick up an unused port number
-./infiniswap-daemon 192.168.0.12 9400
-```
+    ```bash  	
+    cd infiniswap_daemon   
+    # ./infiniswap-daemon <ip> <port> 
+    # pick up an unused port number
+    ./infiniswap-daemon 192.168.0.12 9400
+    ```
+
 2. Prepare server (portal) list on M1:  
-```  
-# Edit the port.list file (<infiniswap path>/setup/portal.list)
-# portal.list format, the port number of each server is assigned above.  
-Line1: number of servers
-Line2: <server1 ip>:<port>  
-Line3: <server2 ip>:<port>
-Line4: ...
-```
-```bash  
-# in this example, M1 only has one server
-1
-192.168.0.12:9400
-```
+    ```  
+    # Edit the port.list file (<infiniswap path>/setup/portal.list)
+    # portal.list format, the port number of each server is assigned above.  
+    Line1: number of servers
+    Line2: <server1 ip>:<port>  
+    Line3: <server2 ip>:<port>
+    Line4: ...
+    ```
+    ```bash  
+    # in this example, M1 only has one server
+    1
+    192.168.0.12:9400
+    ```
+
 3. Disable existing swap partitions on M1:
-```bash  	
-# check existing swap partitions
-sudo swapon -s
+    ```bash  	
+    # check existing swap partitions
+    sudo swapon -s
 
-# disable existing swap partitions
-sudo swapoff <swap partitions>
-```
+    # disable existing swap partitions
+    sudo swapoff <swap partitions>
+    ```
+
 4. Create an infiniswap block device on M1:  
-```bash  	
-cd setup
-# create block device: nbdx-infiniswap0
-# make nbdx-infiniswap0 a swap partition
-sudo ./infiniswap_bd_setup.sh
-```
+    ```bash  	
+    cd setup
+    # create block device: nbdx-infiniswap0
+    # make nbdx-infiniswap0 a swap partition
+    sudo ./infiniswap_bd_setup.sh
+    ```
 
-```bash  	
-# If you have the error: 
-#   "insmod: ERROR: could not insert module infiniswap.ko: Invalid parameters"
-# or get the following message from kernel (dmesg):
-#   "infiniswap: disagrees about version of symbol: xxxx"
-# You need a proper Module.symvers file for the MLNX_OFED driver
-#
-cd infiniswap_bd
-make clean
-cd ../setup
-# Solution 1 (copy the Module.symvers file from MLNX_OFED):
-./get_module.symvers.sh
-# Or solution 2 (generate a new Module.symvers file)
-#./create_Module.symvers.sh
-# Then, recompile infiniswap block device from step 3 in "How to Build and Install"
-```
+    ```bash  	
+    # If you have the error: 
+    #   "insmod: ERROR: could not insert module infiniswap.ko: Invalid parameters"
+    # or get the following message from kernel (dmesg):
+    #   "infiniswap: disagrees about version of symbol: xxxx"
+    # You need a proper Module.symvers file for the MLNX_OFED driver
+    #
+    cd infiniswap_bd
+    make clean
+    cd ../setup
+    # Solution 1 (copy the Module.symvers file from MLNX_OFED):
+    ./get_module.symvers.sh
+    # Or solution 2 (generate a new Module.symvers file)
+    #./create_Module.symvers.sh
+    # Then, recompile infiniswap block device from step 3 in "How to Build and Install"
+    ```
 
 5. Configure memory limitation of container (LXC)  
-```bash  	
-# edit "memory.limit_in_bytes" in "config" file of container (LXC)
+    ```bash  	
+    # edit "memory.limit_in_bytes" in "config" file of container (LXC)
 
-# For example, this container on M1 can use 5GB local memory at most.
-# Additional memory data will be stored in the remote memory provided by M2.   
-lxc.cgroup.memory.limit_in_bytes = 5G
-```
+    # For example, this container on M1 can use 5GB local memory at most.
+    # Additional memory data will be stored in the remote memory provided by M2.   
+    lxc.cgroup.memory.limit_in_bytes = 5G
+    ```
 
 Now, you can start your applications (in container).     
 The extra memory data from applications will be stored in remote memory.   
