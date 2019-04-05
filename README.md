@@ -18,7 +18,7 @@ The following prerequisites are required to use Infiniswap:
 * Software  
   * Operating system: Ubuntu 14.04 (kernel 3.13.0, also tested on 4.4.0/4.11.0)
   * Container: LXC (or any other container technologies) with cgroup (memory and swap) enabled  
-  * RDMA NIC driver: [MLNX_OFED 3.2/3.3/3.4/4.1](http://www.mellanox.com/page/products_dyn?product_family=26), and select the right version for your operating system. 
+  * RDMA NIC driver: [MLNX_OFED 3.2/3.3/3.4/4.1](http://www.mellanox.com/page/products_dyn?product_family=26) (*recommend 4.1*), and select the right version for your operating system. 
 
 * Hardware  
    * Mellanox ConnectX-3/4 (InfiniBand)
@@ -209,15 +209,17 @@ How to Run
     #   "insmod: ERROR: could not insert module infiniswap.ko: Invalid parameters"
     # or get the following message from kernel (dmesg):
     #   "infiniswap: disagrees about version of symbol: xxxx"
-    # You need a proper Module.symvers file for the MLNX_OFED driver
+    # You need a proper Module.symvers file for the MLNX_OFED driver (kernel module)
     #
     cd infiniswap_bd
     make clean
     cd ../setup
-    # Solution 1 (copy the Module.symvers file from MLNX_OFED):
-    ./get_module.symvers.sh
+    # Solution 1 (copy the Module.symvers file from MLNX_OFED dkms folder):
+    # provide mlnx_ofed_version: 3.2,3.3,3.4,4.1, or not (default is 4.*)
+    ./get_module.symvers.sh {mlnx_ofed_version}
+    # ./get_module.symvers.sh 4.1
     # Or solution 2 (generate a new Module.symvers file)
-    #./create_Module.symvers.sh
+    ./create_Module.symvers.sh {mlnx_ofed_version}
     # Then, recompile infiniswap block device from step 3 in "How to Build and Install"
     ```
 
@@ -249,7 +251,7 @@ However, it has no dependency on LXC. Any container technologies that can limit 
 We haven't tried Docker yet. If you find any problems when running infiniswap in a Docker environment, please contact us.  
 
 3. Invalid parameters error when insert module?
-There are two ways of compiling infiniswap; using 1) inbox driver 2) Mellanox OFED
+There are two ways of compiling infiniswap; using 1) inbox driver 2) Mellanox OFED. 
 When you use inbox driver, you can compile/link against kernel headers/modules.
 When you use Mellanox OFED, you need to compile/link against OFED headers/modules.
 This should be handled by configure file, and refer the Makefile that links OFED modules.

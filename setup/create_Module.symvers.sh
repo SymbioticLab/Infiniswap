@@ -28,11 +28,17 @@
 #
 # Description: creates Module.symvers file for InfiniBand modules 
 
+if [ ! -n "$1" ] ;then
+MLNX_OFED_VERSION="4.*"
+else
+MLNX_OFED_VERSION=$1
+fi
+
 KVERSION=${KVERSION:-$(uname -r)}
 MOD_SYMVERS=../infiniswap_bd/Module.symvers
 SYMS=./syms
 
-MODULES_DIR=/var/lib/dkms/mlnx-ofed-kernel/kernel-$(uname -r)-x86_64/module
+MODULES_DIR=/var/lib/dkms/mlnx-ofed-kernel/${MLNX_OFED_VERSION}/$(uname -r)/x86_64/module
 
 if [ -f ${MOD_SYMVERS} -a ! -f ${MOD_SYMVERS}.save ]; then
 	mv ${MOD_SYMVERS} ${MOD_SYMVERS}.save
